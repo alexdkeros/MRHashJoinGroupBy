@@ -1,0 +1,6 @@
+id,name,age
+1,alex,45
+2,dim,4
+3,kon,60
+4,alex,1000
+5,mum,68

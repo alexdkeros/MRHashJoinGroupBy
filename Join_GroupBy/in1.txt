@@ -1,0 +1,6 @@
+id,name,surname
+1,alex,keros
+2,dim,papa
+3,kon,panous
+4,dim,mpompa
+5,dad,reres
