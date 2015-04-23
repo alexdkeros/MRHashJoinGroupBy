@@ -1,6 +1,7 @@
 package hashJoin;
 
 import helperClasses.TextPair;
+import helperClasses.Utils;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -11,6 +12,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import org.apache.commons.collections.map.MultiValueMap;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -199,7 +201,7 @@ public class MRHashJoin{
 					Set<String> others=hmap.get(attrs[joinPos]);
 					if (!others.isEmpty()){
 						for (String o : others){
-							context.write(NullWritable.get(), new Text(value.toString()+","+o));  //can use StringUtils.join(attrs,delim) to remove join col
+							context.write(NullWritable.get(), new Text(o+context.getConfiguration().get("delimiter")+value.toString()));  //can use StringUtils.join(attrs,delim) to remove join col
 							
 						}
 					}
@@ -213,17 +215,20 @@ public class MRHashJoin{
 	public static void main(String[] args) throws Exception {
 		
 		//correct usage check
-		if (args.length != 4) {
-			System.err.println("Usage: MRHashJoin <input path 1> <input path 2> <join_column_name> <num_of_machines>");
+		if (args.length != 5) {
+			System.err.println("Usage: MRHashJoin <input path 1> <input path 2> <output path> <join_column_name> <num_of_machines>");
 			System.exit(-1);
 		}
 		
 		System.out.println("Path0:"+args[0]); //DBG
 		System.out.println("Path1:"+args[1]); //DBG
+		System.out.println("OutPath:"+args[2]); //DBG
+		
 		
 		//input paths
 		Path p0=new Path(args[0]);
 		Path p1=new Path(args[1]);
+		Path outp=new Path(args[2]);
 		
 		Configuration conf=new Configuration();
 		
@@ -234,6 +239,7 @@ public class MRHashJoin{
 
 		System.out.println("P0: "+hdfs.exists(p0));	//DBG
 		System.out.println("P1: "+hdfs.exists(p1));	//DBG
+		System.out.println("OutP: "+hdfs.exists(outp));	//DBG
 		
 		
 		//column delimiter
@@ -246,7 +252,7 @@ public class MRHashJoin{
 		br0.close();
 		
 		//set join position for relation 0
-		conf.setInt(p0.getName()+"_join_pos",Arrays.asList(cols0.split(",")).indexOf(args[2]));
+		conf.setInt(p0.getName()+"_join_pos",Arrays.asList(cols0.split(",")).indexOf(args[3]));
 		
 		//--relation 1--
 		//get column names
@@ -255,20 +261,25 @@ public class MRHashJoin{
 		br1.close();
 		
 		//set join position for relation 0
-		conf.setInt(p1.getName()+"_join_pos",Arrays.asList(cols1.split(",")).indexOf(args[2]));
+		conf.setInt(p1.getName()+"_join_pos",Arrays.asList(cols1.split(",")).indexOf(args[3]));
+		
+		//join columns
+		String joinCols=relationColumn(FilenameUtils.removeExtension(p0.getName()),cols0,conf.get("delimiter"),".")+
+				conf.get("delimiter")+
+				relationColumn(FilenameUtils.removeExtension(p1.getName()),cols1,conf.get("delimiter"),".")+"\n";
 		
 		//--job configuration--
 		Job job = new Job(conf,"HashJoin");
 		job.setJarByClass(MRHashJoin.class);
 		
 		//num of reducers
-		job.setNumReduceTasks(Integer.parseInt(args[3]));
+		job.setNumReduceTasks(Integer.parseInt(args[4]));
 		
 		//inputs
 		FileInputFormat.addInputPath(job, p0);
 		FileInputFormat.addInputPath(job, p1);
 		//output
-		FileOutputFormat.setOutputPath(job, new Path("out"));
+		FileOutputFormat.setOutputPath(job, outp);
 		//classes
 		job.setMapperClass(HashJoinMapper.class);
 		job.setPartitionerClass(FirstPartitioner.class);
@@ -282,7 +293,19 @@ public class MRHashJoin{
 		job.setOutputKeyClass(NullWritable.class);
 		job.setOutputValueClass(Text.class);
 
-		System.exit(job.waitForCompletion(true) ? 0 : 1);
+		System.exit(job.waitForCompletion(true) ? 
+				(Utils.copyMergeWTitle(hdfs, outp, hdfs, new Path(args[2]+"merged"), false, conf, joinCols) ? 0 : 1) //if job is successful, merge outputs and append column names
+				: 1);
 	}
+	
+	private static String relationColumn(String relName, String cols,String splitDelim,String betweenDelim){
+		String[] colArray=cols.split(splitDelim);
+		String[] outArray=new String[colArray.length];
+		for (int i=0;i<colArray.length;i++){
+			outArray[i]=relName+betweenDelim+colArray[i];
+		}
+		return StringUtils.join(outArray,splitDelim);	
+	}
+	
 
 }
