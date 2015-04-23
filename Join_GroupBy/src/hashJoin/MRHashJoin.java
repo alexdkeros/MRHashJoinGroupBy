@@ -5,6 +5,7 @@ import helperClasses.TextPair;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
@@ -13,6 +14,7 @@ import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
@@ -211,24 +213,35 @@ public class MRHashJoin{
 	public static void main(String[] args) throws Exception {
 		
 		//correct usage check
-		if (args.length != 3) {
-			System.err.println("Usage: MRHashJoin <input path 1> <input path 2> <join_column_name>");
+		if (args.length != 4) {
+			System.err.println("Usage: MRHashJoin <input path 1> <input path 2> <join_column_name> <num_of_machines>");
 			System.exit(-1);
 		}
+		
+		System.out.println("Path0:"+args[0]); //DBG
+		System.out.println("Path1:"+args[1]); //DBG
 		
 		//input paths
 		Path p0=new Path(args[0]);
 		Path p1=new Path(args[1]);
 		
-		
 		Configuration conf=new Configuration();
+		
+		//filesystem
+		FileSystem hdfs=FileSystem.get(conf);
+		System.out.println(hdfs.getWorkingDirectory()); //DBG
+		
+
+		System.out.println("P0: "+hdfs.exists(p0));	//DBG
+		System.out.println("P1: "+hdfs.exists(p1));	//DBG
+		
 		
 		//column delimiter
 		conf.set("delimiter", ",");
 		
 		//--relation 0--
 		//get column names
-		BufferedReader br0=new BufferedReader(new FileReader(args[0]));
+		BufferedReader br0=new BufferedReader(new InputStreamReader(hdfs.open(p0)));
 		String cols0=br0.readLine();
 		br0.close();
 		
@@ -237,7 +250,7 @@ public class MRHashJoin{
 		
 		//--relation 1--
 		//get column names
-		BufferedReader br1=new BufferedReader(new FileReader(args[1]));
+		BufferedReader br1=new BufferedReader(new InputStreamReader(hdfs.open(p1)));
 		String cols1=br1.readLine();
 		br1.close();
 		
@@ -247,6 +260,9 @@ public class MRHashJoin{
 		//--job configuration--
 		Job job = new Job(conf,"HashJoin");
 		job.setJarByClass(MRHashJoin.class);
+		
+		//num of reducers
+		job.setNumReduceTasks(Integer.parseInt(args[3]));
 		
 		//inputs
 		FileInputFormat.addInputPath(job, p0);
