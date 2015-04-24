@@ -79,7 +79,7 @@ public class MRHashJoin{
 			
 			System.out.println("MAP key:"+key+" val:"+value);//DBG
 			
-			if (!key.equals(new LongWritable(0))){ //ignore first line of file containing column names
+			if (!(key.equals(new LongWritable(0)) && context.getConfiguration().getBoolean("ignoreZeroLine", true))){ //ignore first line of file containing column names
 
 				String[] values=(value.toString()).split(delim);
 								
@@ -245,6 +245,9 @@ public class MRHashJoin{
 		//column delimiter
 		conf.set("delimiter", ",");
 		
+		//ignore line with 0 offset containing column names
+		conf.setBoolean("ignoreZeroLine", true);
+		
 		//--relation 0--
 		//get column names
 		BufferedReader br0=new BufferedReader(new InputStreamReader(hdfs.open(p0)));
@@ -252,7 +255,7 @@ public class MRHashJoin{
 		br0.close();
 		
 		//set join position for relation 0
-		conf.setInt(p0.getName()+"_join_pos",Arrays.asList(cols0.split(",")).indexOf(args[3]));
+		conf.setInt(p0.getName()+"_join_pos",Arrays.asList(cols0.split(conf.get("delimiter"))).indexOf(args[3]));
 		
 		//--relation 1--
 		//get column names
@@ -261,7 +264,7 @@ public class MRHashJoin{
 		br1.close();
 		
 		//set join position for relation 0
-		conf.setInt(p1.getName()+"_join_pos",Arrays.asList(cols1.split(",")).indexOf(args[3]));
+		conf.setInt(p1.getName()+"_join_pos",Arrays.asList(cols1.split(conf.get("delimiter"))).indexOf(args[3]));
 		
 		//join columns
 		String joinCols=relationColumn(FilenameUtils.removeExtension(p0.getName()),cols0,conf.get("delimiter"),".")+
