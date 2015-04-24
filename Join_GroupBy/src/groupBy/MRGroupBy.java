@@ -74,7 +74,7 @@ public class MRGroupBy {
 	/*
 	 * Reducer
 	 */
-	static class GroupByReducer extends Reducer<Text, Text, NullWritable, Text> {
+	public static class GroupByReducer extends Reducer<Text, Text, NullWritable, Text> {
 
 		private String delim;
 		

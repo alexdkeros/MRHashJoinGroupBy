@@ -4,16 +4,13 @@ import helperClasses.TextPair;
 import helperClasses.Utils;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -21,10 +18,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.WritableComparator;
-import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -34,7 +29,6 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Iterables;
 
 public class MRHashJoin{
 	
@@ -144,7 +138,7 @@ public class MRHashJoin{
 	/*
 	 * Reducer
 	 */
-	static class HashJoinReducer extends Reducer<TextPair, Text, NullWritable, Text> {
+	public static class HashJoinReducer extends Reducer<TextPair, Text, NullWritable, Text> {
 
 		private static HashMultimap<String,String> hmap;
 		private String delim;
@@ -267,9 +261,9 @@ public class MRHashJoin{
 		conf.setInt(p1.getName()+"_join_pos",Arrays.asList(cols1.split(conf.get("delimiter"))).indexOf(args[3]));
 		
 		//join columns
-		String joinCols=relationColumn(FilenameUtils.removeExtension(p0.getName()),cols0,conf.get("delimiter"),".")+
+		String joinCols=Utils.relationColumn(FilenameUtils.removeExtension(p0.getName()),cols0,conf.get("delimiter"),".")+
 				conf.get("delimiter")+
-				relationColumn(FilenameUtils.removeExtension(p1.getName()),cols1,conf.get("delimiter"),".")+"\n";
+				Utils.relationColumn(FilenameUtils.removeExtension(p1.getName()),cols1,conf.get("delimiter"),".")+"\n";
 		
 		//--job configuration--
 		Job job = new Job(conf,"HashJoin");
@@ -301,14 +295,6 @@ public class MRHashJoin{
 				: 1);
 	}
 	
-	private static String relationColumn(String relName, String cols,String splitDelim,String betweenDelim){
-		String[] colArray=cols.split(splitDelim);
-		String[] outArray=new String[colArray.length];
-		for (int i=0;i<colArray.length;i++){
-			outArray[i]=relName+betweenDelim+colArray[i];
-		}
-		return StringUtils.join(outArray,splitDelim);	
-	}
 	
 
 }

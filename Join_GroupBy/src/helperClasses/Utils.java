@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -77,5 +78,14 @@ public class Utils {
 			}
 		}
 		return dst;
+	}
+	
+	public static String relationColumn(String relName, String cols,String splitDelim,String betweenDelim){
+		String[] colArray=cols.split(splitDelim);
+		String[] outArray=new String[colArray.length];
+		for (int i=0;i<colArray.length;i++){
+			outArray[i]=relName+betweenDelim+colArray[i];
+		}
+		return StringUtils.join(outArray,splitDelim);	
 	}
 }
