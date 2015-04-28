@@ -209,6 +209,83 @@ public class MRHashJoin{
 	}
 	
 	
+	public static boolean run(Path p0, Path p1, Path outp,String joinCol, Configuration conf, int reducerNum) throws IOException, ClassNotFoundException, InterruptedException{
+
+		//filesystem
+		FileSystem hdfs=FileSystem.get(conf);
+		System.out.println(hdfs.getWorkingDirectory()); //DBG
+		
+
+		System.out.println("P0: "+hdfs.exists(p0));	//DBG
+		System.out.println("P1: "+hdfs.exists(p1));	//DBG
+		System.out.println("OutP: "+hdfs.exists(outp));	//DBG
+		
+
+		//--relation 0--
+		//get column names
+		BufferedReader br0=new BufferedReader(new InputStreamReader(hdfs.open(p0)));
+		String cols0=br0.readLine();
+		br0.close();
+		
+		//set join position for relation 0
+		conf.setInt(p0.getName()+"_join_pos",Arrays.asList(cols0.split(conf.get("delimiter"))).indexOf(joinCol));
+		//output columns
+		String outCols0=StringUtils.join(ArrayUtils.remove(cols0.split(conf.get("delimiter")), conf.getInt(p0.getName()+"_join_pos", -1)),conf.get("delimiter"));
+		
+		//--relation 1--
+		//get column names
+		BufferedReader br1=new BufferedReader(new InputStreamReader(hdfs.open(p1)));
+		String cols1=br1.readLine();
+		br1.close();
+		
+		//set join position for relation 1
+		conf.setInt(p1.getName()+"_join_pos",Arrays.asList(cols1.split(conf.get("delimiter"))).indexOf(joinCol));
+		//output columns
+		String outCols1=StringUtils.join(ArrayUtils.remove(cols1.split(conf.get("delimiter")), conf.getInt(p1.getName()+"_join_pos", -1)),conf.get("delimiter"));
+				
+		
+		//join columns
+		String joinCols=null;
+		if (conf.getBoolean("attach-relation-names", false)){
+			joinCols=joinCol+"(joinAttr)"+conf.get("delimiter")+
+				Utils.relationColumn(FilenameUtils.removeExtension(p0.getName()),outCols0,conf.get("delimiter"),".")+
+				conf.get("delimiter")+
+				Utils.relationColumn(FilenameUtils.removeExtension(p1.getName()),outCols1,conf.get("delimiter"),".");
+		}else{
+			joinCols = joinCol + conf.get("delimiter")
+					+ outCols0 + conf.get("delimiter") + outCols1;
+		}
+		conf.set("output-join-cols", joinCols);
+		
+		//--job configuration--
+		Job job = new Job(conf,"HashJoin");
+		job.setJarByClass(MRHashJoin.class);
+		
+		//num of reducers
+		job.setNumReduceTasks(reducerNum);
+		
+		//inputs
+		FileInputFormat.addInputPath(job, p0);
+		FileInputFormat.addInputPath(job, p1);
+		//output
+		FileOutputFormat.setOutputPath(job, outp);
+		//classes
+		job.setMapperClass(HashJoinMapper.class);
+		job.setPartitionerClass(FirstPartitioner.class);
+		job.setSortComparatorClass(KeyComparator.class);
+		job.setGroupingComparatorClass(GroupComparator.class);
+		job.setReducerClass(HashJoinReducer.class);
+		//map output
+		job.setMapOutputKeyClass(TextPair.class);
+		job.setMapOutputValueClass(Text.class);
+		//reducer output
+		job.setOutputKeyClass(NullWritable.class);
+		job.setOutputValueClass(Text.class);
+		
+		return job.waitForCompletion(true);
+	}
+	
+	
 	public static void main(String[] args) throws Exception {
 		
 		//correct usage check
@@ -228,81 +305,21 @@ public class MRHashJoin{
 		Path outp=new Path(args[2]);
 		
 		Configuration conf=new Configuration();
+				
+		//column delimiter
+		conf.set("delimiter", ",");
+		//ignore line with 0 offset containing column names
+		conf.setBoolean("ignoreZeroLine", true);
+		
+		conf.setBoolean("attach-relation-names", true);
 		
 		//filesystem
 		FileSystem hdfs=FileSystem.get(conf);
 		System.out.println(hdfs.getWorkingDirectory()); //DBG
-		
 
-		System.out.println("P0: "+hdfs.exists(p0));	//DBG
-		System.out.println("P1: "+hdfs.exists(p1));	//DBG
-		System.out.println("OutP: "+hdfs.exists(outp));	//DBG
-		
-		
-		//column delimiter
-		conf.set("delimiter", ",");
-		
-		//ignore line with 0 offset containing column names
-		conf.setBoolean("ignoreZeroLine", true);
-		
-		//--relation 0--
-		//get column names
-		BufferedReader br0=new BufferedReader(new InputStreamReader(hdfs.open(p0)));
-		String cols0=br0.readLine();
-		br0.close();
-		
-		//set join position for relation 0
-		conf.setInt(p0.getName()+"_join_pos",Arrays.asList(cols0.split(conf.get("delimiter"))).indexOf(args[3]));
-		//output columns
-		String outCols0=StringUtils.join(ArrayUtils.remove(cols0.split(conf.get("delimiter")), conf.getInt(p0.getName()+"_join_pos", -1)),conf.get("delimiter"));
-		
-		//--relation 1--
-		//get column names
-		BufferedReader br1=new BufferedReader(new InputStreamReader(hdfs.open(p1)));
-		String cols1=br1.readLine();
-		br1.close();
-		
-		//set join position for relation 1
-		conf.setInt(p1.getName()+"_join_pos",Arrays.asList(cols1.split(conf.get("delimiter"))).indexOf(args[3]));
-		//output columns
-		String outCols1=StringUtils.join(ArrayUtils.remove(cols1.split(conf.get("delimiter")), conf.getInt(p1.getName()+"_join_pos", -1)),conf.get("delimiter"));
-				
-		//join columns
-		String joinCols=args[3]+"(joinAttr)"+conf.get("delimiter")+
-				Utils.relationColumn(FilenameUtils.removeExtension(p0.getName()),outCols0,conf.get("delimiter"),".")+
-				conf.get("delimiter")+
-				Utils.relationColumn(FilenameUtils.removeExtension(p1.getName()),outCols1,conf.get("delimiter"),".")+"\n";
-		
-		//--job configuration--
-		Job job = new Job(conf,"HashJoin");
-		job.setJarByClass(MRHashJoin.class);
-		
-		//num of reducers
-		job.setNumReduceTasks(Integer.parseInt(args[4]));
-		
-		//inputs
-		FileInputFormat.addInputPath(job, p0);
-		FileInputFormat.addInputPath(job, p1);
-		//output
-		FileOutputFormat.setOutputPath(job, outp);
-		//classes
-		job.setMapperClass(HashJoinMapper.class);
-		job.setPartitionerClass(FirstPartitioner.class);
-		job.setSortComparatorClass(KeyComparator.class);
-		job.setGroupingComparatorClass(GroupComparator.class);
-		job.setReducerClass(HashJoinReducer.class);
-		//map output
-		job.setMapOutputKeyClass(TextPair.class);
-		job.setMapOutputValueClass(Text.class);
-		//reducer output
-		job.setOutputKeyClass(NullWritable.class);
-		job.setOutputValueClass(Text.class);
-
-		System.exit(job.waitForCompletion(true) ? 
-				(Utils.copyMergeWTitle(hdfs, outp, hdfs, new Path(args[2]+"merged"), false, conf, joinCols) ? 0 : 1) //if job is successful, merge outputs and append column names
+		System.exit(run(p0,p1,outp,args[3],conf,Integer.parseInt(args[4]))? 
+				(Utils.copyMergeWTitle(hdfs, outp, hdfs, new Path(args[2]+"merged"), false, conf, conf.get("output-join-cols")+"\n") ? 0 : 1) //if job is successful, merge outputs and append column names
 				: 1);
 	}
 	
-	
-
 }

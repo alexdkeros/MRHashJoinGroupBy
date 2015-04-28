@@ -8,6 +8,7 @@ import hashJoin.MRHashJoin.GroupComparator;
 import hashJoin.MRHashJoin.HashJoinMapper;
 import hashJoin.MRHashJoin.HashJoinReducer;
 import hashJoin.MRHashJoin.KeyComparator;
+import helperClasses.Merger;
 import helperClasses.TextPair;
 import helperClasses.Utils;
 
@@ -31,6 +32,8 @@ public class MRHashJoinGroup {
 
 	public static void main(String[] args) throws Exception {
 
+		int exitStatus=0;
+		
 		// correct usage check
 		if (args.length != 5) {
 			System.err
@@ -40,169 +43,59 @@ public class MRHashJoinGroup {
 
 		System.out.println("Path0:" + args[0]); // DBG
 		System.out.println("Path1:" + args[1]); // DBG
+		
+		int reducerNum=Integer.parseInt(args[4]);
+
+		Configuration conf=new Configuration();
+		
+		//filesystem
+		FileSystem hdfs=FileSystem.get(conf);
+		System.out.println(hdfs.getWorkingDirectory()); //DBG
+		
+		//column delimiter
+		conf.set("delimiter", ",");
+		//ignore line with 0 offset containing column names
+		conf.setBoolean("ignoreZeroLine", true);
+		//attach relation names to join cols
+		conf.setBoolean("attach-relation-names", false);
+		//hashJoin output folder
+		conf.set("hashjoin-out", "outHJ");
+		conf.set("groupby-out","outGB");
+		conf.set("merge-out","outHJG/merged");
+		conf.set("merger","fs"); //fs or MR
+		
+		// -----------------------------------------------HASHJOIN-------------------------------------------
 
 		// input paths
 		Path p0 = new Path(args[0]);
 		Path p1 = new Path(args[1]);
-
-		// -----------------------------------------------HASHJOIN-------------------------------------------
-
-		Configuration confJoin = new Configuration();
-
-		// column delimiter
-		confJoin.set("delimiter", ",");
-		// ignore line with 0 offset containing column names
-		confJoin.setBoolean("ignoreZeroLine", true);
-
-		// filesystem
-		FileSystem hdfs = FileSystem.get(confJoin);
-		System.out.println(hdfs.getWorkingDirectory()); // DBG
-
-		System.out.println("P0: " + hdfs.exists(p0)); // DBG
-		System.out.println("P1: " + hdfs.exists(p1)); // DBG
-
-		// output path
-		Path outp = new Path(hdfs.getWorkingDirectory().toString() + "/outJoin");
-
-		// --relation 0--
-		// get column names
-		BufferedReader br0 = new BufferedReader(new InputStreamReader(
-				hdfs.open(p0)));
-		String cols0 = br0.readLine();
-		br0.close();
-
-		// set join position for relation 0
-		confJoin.setInt(
-				p0.getName() + "_join_pos",
-				Arrays.asList(cols0.split(confJoin.get("delimiter"))).indexOf(
-						args[2]));
-		// output columns
-		String outCols0 = StringUtils.join(ArrayUtils.remove(
-				cols0.split(confJoin.get("delimiter")),
-				confJoin.getInt(p0.getName() + "_join_pos", -1)), confJoin
-				.get("delimiter"));
-
-		// --relation 1--
-		// get column names
-		BufferedReader br1 = new BufferedReader(new InputStreamReader(
-				hdfs.open(p1)));
-		String cols1 = br1.readLine();
-		br1.close();
-
-		// set join position for relation 1
-		confJoin.setInt(
-				p1.getName() + "_join_pos",
-				Arrays.asList(cols1.split(confJoin.get("delimiter"))).indexOf(
-						args[2]));
-		// output columns
-		String outCols1 = StringUtils.join(ArrayUtils.remove(
-				cols1.split(confJoin.get("delimiter")),
-				confJoin.getInt(p1.getName() + "_join_pos", -1)), confJoin
-				.get("delimiter"));
-
-		// join columns
-		// can add relName.attrName using
-		// Utils.relationColumn(FilenameUtils.removeExtension(p0.getName()),outCols0,confJoin.get("delimiter"),".")
-		String joinCols = args[2] + confJoin.get("delimiter")
-				+ outCols0 + confJoin.get("delimiter") + outCols1;
-
-		// --job configuration--
-		Job jobJoin = new Job(confJoin, "HashJoin");
-		jobJoin.setJarByClass(MRHashJoin.class);
-
-		// num of reducers
-		jobJoin.setNumReduceTasks(Integer.parseInt(args[4]));
-
-		// inputs
-		FileInputFormat.addInputPath(jobJoin, p0);
-		FileInputFormat.addInputPath(jobJoin, p1);
-		// output
-		FileOutputFormat.setOutputPath(jobJoin, outp);
-		// classes
-		jobJoin.setMapperClass(HashJoinMapper.class);
-		jobJoin.setPartitionerClass(FirstPartitioner.class);
-		jobJoin.setSortComparatorClass(KeyComparator.class);
-		jobJoin.setGroupingComparatorClass(GroupComparator.class);
-		jobJoin.setReducerClass(HashJoinReducer.class);
-		// map output
-		jobJoin.setMapOutputKeyClass(TextPair.class);
-		jobJoin.setMapOutputValueClass(Text.class);
-		// reducer output
-		jobJoin.setOutputKeyClass(NullWritable.class);
-		jobJoin.setOutputValueClass(Text.class);
-
-		jobJoin.waitForCompletion(true);
+		//output path
+		Path outpHJ=new Path(conf.get("hashjoin-out"));
+		//run
+		exitStatus=(MRHashJoin.run(p0, p1, outpHJ, args[2], conf, reducerNum)? exitStatus :1);
 
 		// --------------------------------------------------------------------------------------------------
 
 		// -----------------------------------------------GROUPBY-------------------------------------------
+		//output path
+		Path outpGB=new Path(conf.get("groupby-out"));
+		//run
+		exitStatus=(MRGroupBy.run(outpHJ, outpGB, conf, args[3],conf.get("output-join-cols"), reducerNum)? exitStatus :1);
+		// --------------------------------------------------------------------------------------------------
 
-		// output path
-		Path outpAll = new Path(hdfs.getWorkingDirectory() + "/outHJG");
-
-		Configuration confGroup = new Configuration();
-
-		// column delimiter
-		confGroup.set("delimiter", ",");
-
-		// ignore line with 0 offset containing column names
-		confGroup.setBoolean("ignoreZeroLine", false);
-
-		String colsRel = joinCols;
-
-		// --args group-by-columns
-		String[] groupByCols = args[3].split(confGroup.get("delimiter"));
-		String[] colPos = new String[groupByCols.length];
-		for (int i = 0; i < groupByCols.length; i++) {
-			colPos[i] = Integer.toString(Arrays.asList(
-					colsRel.split(confGroup.get("delimiter"))).indexOf(
-					groupByCols[i]));
-			
-			System.out.println("Finding col pos:"+Integer.toString(Arrays.asList(
-					colsRel.split(confGroup.get("delimiter"))).indexOf(
-					groupByCols[i]))); //DBG
-		}
-		confGroup.set("group_by_cols",
-				StringUtils.join(colPos, confGroup.get("delimiter")));
+		// -----------------------------------------------MERGE-------------------------------------------
+		//merge path
+		Path outpM=new Path(conf.get("merge-out"));
 		
-		System.out.println("From args:"+StringUtils.join(groupByCols,",")); //DBG
-		System.out.println("Relation cols:" + colsRel); // DBG
-		System.out.println("GroupBy cols:" + args[3]); // DBG
-		System.out.println("GroupBy cols pos:" + confGroup.get("group_by_cols")); // DBG
-
-		// --job configuration--
-		Job jobGroup = new Job(confGroup, "GroupBy");
-		jobGroup.setJarByClass(MRGroupBy.class);
-
-		// num of reducers
-		jobGroup.setNumReduceTasks(Integer.parseInt(args[4]));
-
-		// inputs
-		FileInputFormat.addInputPath(jobGroup, outp);
-		// output
-		FileOutputFormat.setOutputPath(jobGroup, outpAll);
-		// classes
-		jobGroup.setMapperClass(GroupByMapper.class);
-		jobGroup.setReducerClass(GroupByReducer.class);
-		// map output
-		jobGroup.setMapOutputKeyClass(Text.class);
-		jobGroup.setMapOutputValueClass(Text.class);
-		// reducer output
-		jobGroup.setOutputKeyClass(NullWritable.class);
-		jobGroup.setOutputValueClass(Text.class);
-
-		System.exit(jobGroup.waitForCompletion(true) ? (Utils.copyMergeWTitle(hdfs,
-				outpAll, hdfs, new Path(hdfs.getWorkingDirectory() + "/outHJG/merged"), false, confGroup, args[3]
-						+ confGroup.get("delimiter") + "count\n") ? 0 : 1) // if job
-																		// is
-																		// successful,
-																		// merge
-																		// outputs
-																		// and
-																		// append
-																		// column
-																		// names
-				: 1);
-
+		if (conf.get("merger")=="fs"){
+			//merge in filesystem
+			Utils.copyMergeWTitle(hdfs,outpGB, hdfs, outpM, false, conf, args[3]+ conf.get("delimiter") + "count\n");
+		}else if (conf.get("merger")=="mr"){
+			//merge using MapReduce job
+			conf.set("first-line", args[3]+ conf.get("delimiter") + "count");
+			exitStatus=(Merger.run(outpGB, outpM, conf)? exitStatus :1);
+		}
+		
+		System.exit(exitStatus);
 	}
 }

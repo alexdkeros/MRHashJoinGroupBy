@@ -57,7 +57,7 @@ public class MRGroupBy {
 		public void map(LongWritable key, Text value, Context context) 
 				throws IOException, InterruptedException {
 						
-			if (!(key.equals(new LongWritable(0)) && context.getConfiguration().getBoolean("ignoreZeroLine", true))){ //ignore first line of file containing column names
+			if (!(key.equals(new LongWritable(0)) && context.getConfiguration().getBoolean("ignoreZeroLine", false))){ //ignore first line of file containing column names
 
 				String[] values=(value.toString()).split(delim);
 
@@ -97,6 +97,65 @@ public class MRGroupBy {
 		}
 	}
 	
+	public static boolean run(Path p0,Path outp, Configuration conf,String groupBy,String cols,int reducerNum) throws IOException, ClassNotFoundException, InterruptedException{
+
+		//filesystem
+		FileSystem hdfs=FileSystem.get(conf);
+		System.out.println(hdfs.getWorkingDirectory()); //DBG
+		
+
+		System.out.println("P0: "+hdfs.exists(p0));	//DBG
+		System.out.println("OutP: "+hdfs.exists(outp));	//DBG
+		
+		String colsRel=cols;
+		if (colsRel==null){
+			//--relation--
+			//get column names from relation
+			BufferedReader br0=new BufferedReader(new InputStreamReader(hdfs.open(p0)));
+			colsRel=br0.readLine();
+			br0.close();
+			
+			//ignore line with 0 offset containing column names
+			conf.setBoolean("ignoreZeroLine", true);
+		}else{
+			conf.setBoolean("ignoreZeroLine", false);
+		}
+		
+		//--args group-by-columns
+		String[] groupByCols=groupBy.split(conf.get("delimiter"));
+		String[] colPos=new String[groupByCols.length];
+		for (int i=0;i<colPos.length;i++){
+			colPos[i]=Integer.toString(Arrays.asList(colsRel.split(conf.get("delimiter"))).indexOf(groupByCols[i]));
+		}
+		conf.set("group_by_cols", StringUtils.join(colPos,conf.get("delimiter")));
+		
+		System.out.println("Relation cols:"+colsRel); //DBG
+		System.out.println("GroupBy cols:"+groupBy); //DBG
+		System.out.println("GroupBy cols pos:"+conf.get("group_by_cols")); //DBG
+		
+		//--job configuration--
+		Job job = new Job(conf,"GroupBy");
+		job.setJarByClass(MRGroupBy.class);
+
+		//num of reducers
+		job.setNumReduceTasks(reducerNum);
+
+		//inputs
+		FileInputFormat.addInputPath(job, p0);
+		//output
+		FileOutputFormat.setOutputPath(job, outp);
+		//classes
+		job.setMapperClass(GroupByMapper.class);
+		job.setReducerClass(GroupByReducer.class);
+		//map output
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(Text.class);
+		//reducer output
+		job.setOutputKeyClass(NullWritable.class);
+		job.setOutputValueClass(Text.class);
+		
+		return job.waitForCompletion(true);
+	}
 	public static void main(String[] args) throws Exception {
 
 		//correct usage check
@@ -122,50 +181,8 @@ public class MRGroupBy {
 		
 		//column delimiter
 		conf.set("delimiter", ",");
-				
-		//ignore line with 0 offset containing column names
-		conf.setBoolean("ignoreZeroLine", true);
 		
-		//--relation--
-		//get column names from relation
-		BufferedReader br0=new BufferedReader(new InputStreamReader(hdfs.open(p0)));
-		String colsRel=br0.readLine();
-		br0.close();
-		
-		//--args group-by-columns
-		String[] groupByCols=args[2].split(conf.get("delimiter"));
-		String[] colPos=new String[groupByCols.length];
-		for (int i=0;i<colPos.length;i++){
-			colPos[i]=Integer.toString(Arrays.asList(colsRel.split(conf.get("delimiter"))).indexOf(groupByCols[i]));
-		}
-		conf.set("group_by_cols", StringUtils.join(colPos,conf.get("delimiter")));
-		
-		System.out.println("Relation cols:"+colsRel); //DBG
-		System.out.println("GroupBy cols:"+args[2]); //DBG
-		System.out.println("GroupBy cols pos:"+conf.get("group_by_cols")); //DBG
-		
-		//--job configuration--
-		Job job = new Job(conf,"GroupBy");
-		job.setJarByClass(MRGroupBy.class);
-
-		//num of reducers
-		job.setNumReduceTasks(Integer.parseInt(args[3]));
-
-		//inputs
-		FileInputFormat.addInputPath(job, p0);
-		//output
-		FileOutputFormat.setOutputPath(job, outp);
-		//classes
-		job.setMapperClass(GroupByMapper.class);
-		job.setReducerClass(GroupByReducer.class);
-		//map output
-		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(Text.class);
-		//reducer output
-		job.setOutputKeyClass(NullWritable.class);
-		job.setOutputValueClass(Text.class);
-		
-		System.exit(job.waitForCompletion(true) ? 
+		System.exit( run(p0,outp,conf,args[2],null,Integer.parseInt(args[3]))? 
 				(Utils.copyMergeWTitle(hdfs, outp, hdfs, new Path(args[1]+"merged"), false, conf, args[2]+conf.get("delimiter")+"count\n") ? 0 : 1) //if job is successful, merge outputs and append column names
 				: 1);
 	
