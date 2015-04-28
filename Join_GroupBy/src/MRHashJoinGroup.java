@@ -16,6 +16,7 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -75,6 +76,11 @@ public class MRHashJoinGroup {
 				p0.getName() + "_join_pos",
 				Arrays.asList(cols0.split(confJoin.get("delimiter"))).indexOf(
 						args[2]));
+		// output columns
+		String outCols0 = StringUtils.join(ArrayUtils.remove(
+				cols0.split(confJoin.get("delimiter")),
+				confJoin.getInt(p0.getName() + "_join_pos", -1)), confJoin
+				.get("delimiter"));
 
 		// --relation 1--
 		// get column names
@@ -83,20 +89,22 @@ public class MRHashJoinGroup {
 		String cols1 = br1.readLine();
 		br1.close();
 
-		// set join position for relation 0
+		// set join position for relation 1
 		confJoin.setInt(
 				p1.getName() + "_join_pos",
 				Arrays.asList(cols1.split(confJoin.get("delimiter"))).indexOf(
 						args[2]));
+		// output columns
+		String outCols1 = StringUtils.join(ArrayUtils.remove(
+				cols1.split(confJoin.get("delimiter")),
+				confJoin.getInt(p1.getName() + "_join_pos", -1)), confJoin
+				.get("delimiter"));
 
 		// join columns
-		String joinCols = Utils.relationColumn(
-				FilenameUtils.removeExtension(p0.getName()), cols0,
-				confJoin.get("delimiter"), ".")
-				+ confJoin.get("delimiter")
-				+ Utils.relationColumn(
-						FilenameUtils.removeExtension(p1.getName()), cols1,
-						confJoin.get("delimiter"), ".");
+		// can add relName.attrName using
+		// Utils.relationColumn(FilenameUtils.removeExtension(p0.getName()),outCols0,confJoin.get("delimiter"),".")
+		String joinCols = args[2] + confJoin.get("delimiter")
+				+ outCols0 + confJoin.get("delimiter") + outCols1;
 
 		// --job configuration--
 		Job jobJoin = new Job(confJoin, "HashJoin");
@@ -163,27 +171,27 @@ public class MRHashJoinGroup {
 		System.out.println("GroupBy cols pos:" + confGroup.get("group_by_cols")); // DBG
 
 		// --job configuration--
-		Job job = new Job(confGroup, "GroupBy");
-		job.setJarByClass(MRGroupBy.class);
+		Job jobGroup = new Job(confGroup, "GroupBy");
+		jobGroup.setJarByClass(MRGroupBy.class);
 
 		// num of reducers
-		job.setNumReduceTasks(Integer.parseInt(args[4]));
+		jobGroup.setNumReduceTasks(Integer.parseInt(args[4]));
 
 		// inputs
-		FileInputFormat.addInputPath(job, outp);
+		FileInputFormat.addInputPath(jobGroup, outp);
 		// output
-		FileOutputFormat.setOutputPath(job, outpAll);
+		FileOutputFormat.setOutputPath(jobGroup, outpAll);
 		// classes
-		job.setMapperClass(GroupByMapper.class);
-		job.setReducerClass(GroupByReducer.class);
+		jobGroup.setMapperClass(GroupByMapper.class);
+		jobGroup.setReducerClass(GroupByReducer.class);
 		// map output
-		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(Text.class);
+		jobGroup.setMapOutputKeyClass(Text.class);
+		jobGroup.setMapOutputValueClass(Text.class);
 		// reducer output
-		job.setOutputKeyClass(NullWritable.class);
-		job.setOutputValueClass(Text.class);
+		jobGroup.setOutputKeyClass(NullWritable.class);
+		jobGroup.setOutputValueClass(Text.class);
 
-		System.exit(job.waitForCompletion(true) ? (Utils.copyMergeWTitle(hdfs,
+		System.exit(jobGroup.waitForCompletion(true) ? (Utils.copyMergeWTitle(hdfs,
 				outpAll, hdfs, new Path(hdfs.getWorkingDirectory() + "/outHJG/merged"), false, confGroup, args[3]
 						+ confGroup.get("delimiter") + "count\n") ? 0 : 1) // if job
 																		// is

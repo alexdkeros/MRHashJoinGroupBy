@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -174,7 +175,7 @@ public class MRHashJoin{
 					
 					String[] attrs=(value.toString()).split(delim);
 					//hash by join column, remove column from rest of tuple
-					hmap.put(attrs[joinPos], StringUtils.join(attrs,delim)); //can use ArrayUtils.remove(attrs, joinPos) to remove joining column
+					hmap.put(attrs[joinPos], StringUtils.join(ArrayUtils.remove(attrs, joinPos),delim)); //can use ArrayUtils.remove(attrs, joinPos) to remove joining column
 
 					System.out.println("RED hmap populate:"+hmap); //DBG
 
@@ -195,8 +196,10 @@ public class MRHashJoin{
 					Set<String> others=hmap.get(attrs[joinPos]);
 					if (!others.isEmpty()){
 						for (String o : others){
-							context.write(NullWritable.get(), new Text(o+context.getConfiguration().get("delimiter")+value.toString()));  //can use StringUtils.join(attrs,delim) to remove join col
-							
+							context.write(NullWritable.get(), new Text(attrs[joinPos]+context.getConfiguration().get("delimiter")+ //joining attribute
+																		o+context.getConfiguration().get("delimiter")+ //relation in hash table
+																		StringUtils.join(ArrayUtils.remove(attrs, joinPos),delim)));  //probing relation
+												
 						}
 					}
 				}
@@ -250,6 +253,8 @@ public class MRHashJoin{
 		
 		//set join position for relation 0
 		conf.setInt(p0.getName()+"_join_pos",Arrays.asList(cols0.split(conf.get("delimiter"))).indexOf(args[3]));
+		//output columns
+		String outCols0=StringUtils.join(ArrayUtils.remove(cols0.split(conf.get("delimiter")), conf.getInt(p0.getName()+"_join_pos", -1)),conf.get("delimiter"));
 		
 		//--relation 1--
 		//get column names
@@ -257,13 +262,16 @@ public class MRHashJoin{
 		String cols1=br1.readLine();
 		br1.close();
 		
-		//set join position for relation 0
+		//set join position for relation 1
 		conf.setInt(p1.getName()+"_join_pos",Arrays.asList(cols1.split(conf.get("delimiter"))).indexOf(args[3]));
-		
+		//output columns
+		String outCols1=StringUtils.join(ArrayUtils.remove(cols1.split(conf.get("delimiter")), conf.getInt(p1.getName()+"_join_pos", -1)),conf.get("delimiter"));
+				
 		//join columns
-		String joinCols=Utils.relationColumn(FilenameUtils.removeExtension(p0.getName()),cols0,conf.get("delimiter"),".")+
+		String joinCols=args[3]+"(joinAttr)"+conf.get("delimiter")+
+				Utils.relationColumn(FilenameUtils.removeExtension(p0.getName()),outCols0,conf.get("delimiter"),".")+
 				conf.get("delimiter")+
-				Utils.relationColumn(FilenameUtils.removeExtension(p1.getName()),cols1,conf.get("delimiter"),".")+"\n";
+				Utils.relationColumn(FilenameUtils.removeExtension(p1.getName()),outCols1,conf.get("delimiter"),".")+"\n";
 		
 		//--job configuration--
 		Job job = new Job(conf,"HashJoin");
