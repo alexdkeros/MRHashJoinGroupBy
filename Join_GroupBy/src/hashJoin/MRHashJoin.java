@@ -72,7 +72,7 @@ public class MRHashJoin{
 		public void map(LongWritable key, Text value, Context context) 
 				throws IOException, InterruptedException {
 			
-			System.out.println("MAP key:"+key+" val:"+value);//DBG
+			//System.out.println("MAP key:"+key+" val:"+value);//DBG
 			
 			if (!(key.equals(new LongWritable(0)) && context.getConfiguration().getBoolean("ignoreZeroLine", true))){ //ignore first line of file containing column names
 
@@ -143,6 +143,7 @@ public class MRHashJoin{
 
 		private static HashMultimap<String,String> hmap;
 		private String delim;
+		private Text txt=new Text();
 		
 		@Override
 		public void setup(Context context){
@@ -170,36 +171,36 @@ public class MRHashJoin{
 				for (Iterator<Text> iterator = values.iterator(); iterator.hasNext();) {
 					Text value = (Text) iterator.next();					
 
-					System.out.println("RED populate inc:"+(i++)+" key:"+key+" val:"+value); //DBG
+					//System.out.println("RED populate inc:"+(i++)+" key:"+key+" val:"+value); //DBG
 
 					
 					String[] attrs=(value.toString()).split(delim);
 					//hash by join column, remove column from rest of tuple
 					hmap.put(attrs[joinPos], StringUtils.join(ArrayUtils.remove(attrs, joinPos),delim)); //can use ArrayUtils.remove(attrs, joinPos) to remove joining column
 
-					System.out.println("RED hmap populate:"+hmap); //DBG
+					//System.out.println("RED hmap populate:"+hmap); //DBG
 
 				}
 			}else{
 				//probe hash map
 
-				System.out.println("RED hmap probe:"+hmap); //DBG
+				//System.out.println("RED hmap probe:"+hmap); //DBG
 				int i=0; //DBG
 				
 				for (Iterator<Text> iterator = values.iterator(); iterator.hasNext();) {
 					Text value = (Text) iterator.next();
 
-					System.out.println("RED probe inc:"+(i++)+" key:"+key+" val:"+value); //DBG
+					//System.out.println("RED probe inc:"+(i++)+" key:"+key+" val:"+value); //DBG
 
 					String[] attrs=(value.toString()).split(delim);
 					
 					Set<String> others=hmap.get(attrs[joinPos]);
 					if (!others.isEmpty()){
 						for (String o : others){
-							context.write(NullWritable.get(), new Text(attrs[joinPos]+context.getConfiguration().get("delimiter")+ //joining attribute
-																		o+context.getConfiguration().get("delimiter")+ //relation in hash table
-																		StringUtils.join(ArrayUtils.remove(attrs, joinPos),delim)));  //probing relation
-												
+							 txt.set(attrs[joinPos]+context.getConfiguration().get("delimiter")+ //joining attribute
+										o+context.getConfiguration().get("delimiter")+ //relation in hash table
+										StringUtils.join(ArrayUtils.remove(attrs, joinPos),delim));  //probing relation
+							context.write(NullWritable.get(),txt);
 						}
 					}
 				}

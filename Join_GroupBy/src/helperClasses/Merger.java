@@ -51,7 +51,7 @@ public class Merger {
 
 		//--job configuration--
 		Job job = new Job(conf,"Merge");
-		job.setJarByClass(Merger.class);
+		//job.setJarByClass(Merger.class);
 
 		//num of reducers
 		job.setNumReduceTasks(1);

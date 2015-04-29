@@ -33,6 +33,7 @@ public class MRGroupBy {
 		private String delim;
 		private int[] columnPos;
 		private String[] groupByColsArray;
+		private Text txt=new Text();
 		
 		@Override
 		public void setup(Context context){
@@ -64,8 +65,8 @@ public class MRGroupBy {
 				for (int i=0;i<columnPos.length;i++){
 					groupByColsArray[i]=values[columnPos[i]];
 				}
-				
-				context.write(new Text(StringUtils.join(groupByColsArray,delim)),value);
+				txt.set(StringUtils.join(groupByColsArray,delim));
+				context.write(txt,value);
 			}
 		}
 
@@ -77,6 +78,7 @@ public class MRGroupBy {
 	public static class GroupByReducer extends Reducer<Text, Text, NullWritable, Text> {
 
 		private String delim;
+		private Text txt=new Text();
 		
 		@Override
 		public void setup(Context context){
@@ -92,8 +94,8 @@ public class MRGroupBy {
 		public void reduce(Text key, Iterable<Text> values,Context context) 
 				throws IOException, InterruptedException {
 			
-			
-			context.write(NullWritable.get(),new Text(key+delim+Iterables.size(values)));
+			txt.set(key+delim+Iterables.size(values));
+			context.write(NullWritable.get(),txt);
 		}
 	}
 	

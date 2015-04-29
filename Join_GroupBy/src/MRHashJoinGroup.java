@@ -13,6 +13,7 @@ import helperClasses.TextPair;
 import helperClasses.Utils;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 
@@ -51,19 +52,8 @@ public class MRHashJoinGroup {
 		//filesystem
 		FileSystem hdfs=FileSystem.get(conf);
 		System.out.println(hdfs.getWorkingDirectory()); //DBG
-		
-		//column delimiter
-		conf.set("delimiter", ",");
-		//ignore line with 0 offset containing column names
-		conf.setBoolean("ignoreZeroLine", true);
-		//attach relation names to join cols
-		conf.setBoolean("attach-relation-names", false);
-		//hashJoin output folder
-		conf.set("hashjoin-out", "outHJ");
-		conf.set("groupby-out","outGB");
-		conf.set("merge-out","outHJG/merged");
-		conf.set("merger","fs"); //fs or MR
-		
+
+		conf.addResource(hdfs.open(new Path(hdfs.getWorkingDirectory()+"/mapred-HJG.xml")));
 		// -----------------------------------------------HASHJOIN-------------------------------------------
 
 		// input paths
@@ -87,10 +77,12 @@ public class MRHashJoinGroup {
 		//merge path
 		Path outpM=new Path(conf.get("merge-out"));
 		
-		if (conf.get("merger")=="fs"){
+		System.out.println("Using merger:"+conf.get("merger")); //DBG
+		
+		if (conf.get("merger").equals("FS")){
 			//merge in filesystem
 			Utils.copyMergeWTitle(hdfs,outpGB, hdfs, outpM, false, conf, args[3]+ conf.get("delimiter") + "count\n");
-		}else if (conf.get("merger")=="mr"){
+		}else if (conf.get("merger").equals("MR")){
 			//merge using MapReduce job
 			conf.set("first-line", args[3]+ conf.get("delimiter") + "count");
 			exitStatus=(Merger.run(outpGB, outpM, conf)? exitStatus :1);

@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<!-- Put HashJoinGroup-specific property overrides in this file. -->
+
+<configuration>
+	<!--set output folder names-->
+	<property>
+  		<name>hashjoin-out</name>
+  		<value>outHJ</value>
+  		<description>
+			output folder of hashjoin operation
+  		</description>
+	</property>
+	<property>
+  		<name>groupby-out</name>
+  		<value>outGB</value>
+  		<description>
+			output folder of group by operation
+  		</description>
+	</property>
+	<property>
+  		<name>merge-out</name>
+  		<value>outHJG/merged</value>
+  		<description>
+			output of merging operation
+  		</description>
+	</property>
+	<property>
+  		<name>merger</name>
+  		<value>FS</value>
+  		<description>
+			FS:merge output files using filesystem operations
+			MR:merge output files using a MapReduce job
+  		</description>
+	</property>
+
+	<!--other configuration-->
+	<property>
+  		<name>delimiter</name>
+  		<value>,</value>
+  		<description>
+			column delimiter
+  		</description>
+	</property>
+	<property>
+  		<name>ignoreZeroLine</name>
+  		<value>true</value>
+  		<description>
+			ignore parsing line containing column names
+  		</description>
+	</property>
+	<property>
+  		<name>attach-relation-names</name>
+  		<value>false</value>
+  		<description>
+			attach relation names at final relation columns, ex. rel1.attr1, rel2.attr2 etc
+  		</description>
+	</property>
+</configuration>
