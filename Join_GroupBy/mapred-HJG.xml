@@ -52,7 +52,7 @@
 	</property>
 	<property>
   		<name>attach-relation-names</name>
-  		<value>false</value>
+  		<value>true</value>
   		<description>
 			attach relation names at final relation columns, ex. rel1.attr1, rel2.attr2 etc
   		</description>

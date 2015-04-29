@@ -248,7 +248,7 @@ public class MRHashJoin{
 		//join columns
 		String joinCols=null;
 		if (conf.getBoolean("attach-relation-names", false)){
-			joinCols=joinCol+"(joinAttr)"+conf.get("delimiter")+
+			joinCols=joinCol+conf.get("delimiter")+ //+"(joinAttr)"
 				Utils.relationColumn(FilenameUtils.removeExtension(p0.getName()),outCols0,conf.get("delimiter"),".")+
 				conf.get("delimiter")+
 				Utils.relationColumn(FilenameUtils.removeExtension(p1.getName()),outCols1,conf.get("delimiter"),".");
