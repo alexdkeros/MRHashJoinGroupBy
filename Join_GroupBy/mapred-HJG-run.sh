@@ -1,28 +1,29 @@
 #!/bin/bash
 
-reducers="2 32 64"
-joinAttrs="salary"
-groupAttrs="salary,R.id,R.rank,R.fname,R.sname,R.married,S.married,S.sname,S.rank,S.fname,S.id,S.foobar"
+reducers=(60 32 2);
+joinAttrs=(salary foobar);
+groupAttrs=(salary,R.id,R.rank,R.fname,R.sname,R.married,R.foobar,S.married,S.sname,S.rank,S.fname,S.id,S.foobar foobar,R.id,R.rank,R.salary,R.fname,R.sname,R.married,S.married,S.sname,S.rank,S.fname,S.salary,S.id);
+hadoopPath="usr/local/hadoop103"
+userPath="/home/advdb05"
+resultsPath="/home/advdb05/timings.txt"
+inPath0="/user/vagvaz/advdb/R.txt"
+inPath1="/user/vagvaz/advdb/S.txt"
 
-for r in $reducers
+for r in ${reducers[@]}
 do
 
-for jA in $joinAttrs
-do
+	for (( i=0; i<2; i++ ))
+	do
 
-for gA in $groupAttrs
-do
+		echo "$r ${joinAttrs[$i]} ${groupAttrs[$i]}" >> $resultsPath
 
-echo "$r $jA $gA" >> ~/workspace/timings.txt
+		/usr/bin/time -a -o $resultsPath -p $hadoopPath/bin/hadoop jar $userPath/MRHashJoinGroup.jar MRHashJoinGroup $inPath0 $inPath1 ${joinAttrs[$i]} ${groupAttrs[$i]} $r
 
-/usr/bin/time -a -o ~/workspace/timings.txt -p /usr/local/hadoop/bin/hadoop jar ~/workspace/MRHashJoinGroup.jar MRHashJoinGroup /user/ak/HJG/R.txt /user/ak/HJG/S.txt $jA $gA $r
+		$hadoopPath/bin/hadoop fs -rmr outHJ
 
-/usr/local/hadoop/bin/hadoop fs -rmr outHJ
+		$hadoopPath/bin/hadoop fs -rmr outGB
 
-/usr/local/hadoop/bin/hadoop fs -rmr outGB
+		$hadoopPath/bin/hadoop fs -rmr outHJG
 
-/usr/local/hadoop/bin/hadoop fs -rmr outHJG
-
-done
-done
+	done
 done
