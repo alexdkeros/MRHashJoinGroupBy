@@ -1,13 +1,13 @@
 #!/bin/bash
 
 reducers=(60 32 2);
-joinAttrs=(salary foobar);
-groupAttrs=(salary,R.id,R.rank,R.fname,R.sname,R.married,R.foobar,S.married,S.sname,S.rank,S.fname,S.id,S.foobar foobar,R.id,R.rank,R.salary,R.fname,R.sname,R.married,S.married,S.sname,S.rank,S.fname,S.salary,S.id);
-hadoopPath="/usr/local/hadoop103"
-userPath="/home/advdb05"
-resultsPath="/home/advdb05/timings.txt"
-inPath0="/user/vagvaz/advdb/R.txt"
-inPath1="/user/vagvaz/advdb/S.txt"
+joinAttrs=(name id);
+groupAttrs=(name,in1.id,in2.id id,in1.name,in2.name);
+hadoopPath="/usr/local/hadoop"
+userPath="/home/ak/workspace"
+resultsPath="/home/ak/workspace/timings.txt"
+inPath0="/user/ak/HJG/in1.txt"
+inPath1="/user/ak/HJG/in2.txt"
 
 for r in ${reducers[@]}
 do
@@ -27,3 +27,4 @@ do
 
 	done
 done
+
