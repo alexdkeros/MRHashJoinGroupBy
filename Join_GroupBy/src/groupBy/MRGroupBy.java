@@ -94,7 +94,7 @@ public class MRGroupBy {
 		public void reduce(Text key, Iterable<Text> values,Context context) 
 				throws IOException, InterruptedException {
 			
-			txt.set(key+delim+Iterables.size(values));
+			txt.set(key+delim+"\t"+Iterables.size(values));
 			context.write(NullWritable.get(),txt);
 		}
 	}

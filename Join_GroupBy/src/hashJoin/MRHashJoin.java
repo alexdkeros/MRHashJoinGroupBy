@@ -6,10 +6,11 @@ import helperClasses.Utils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Set;
-
+import java.util.List;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -28,8 +29,6 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-
-import com.google.common.collect.HashMultimap;
 
 public class MRHashJoin{
 	
@@ -143,7 +142,7 @@ public class MRHashJoin{
 	 */
 	public static class HashJoinReducer extends Reducer<TextPair, Text, NullWritable, Text> {
 
-		private static HashMultimap<String,String> hmap;
+		private static HashMap<String,List<String>> hmap;
 		private String delim;
 		private Text txt=new Text();
 		
@@ -155,13 +154,16 @@ public class MRHashJoin{
 			//get delimiter from configuration
 			delim=conf.get("delimiter");
 			
-			hmap=HashMultimap.create();
-						
+			hmap=new HashMap<String,List<String>>();
+									
 		}
 		
 		@Override
 		public void reduce(TextPair key, Iterable<Text> values,Context context) 
 				throws IOException, InterruptedException {
+
+
+			String hMapKey=new String();
 
 			int joinPos=context.getConfiguration().getInt(key.getSecond()+"_join_pos", -1);
 			
@@ -173,21 +175,30 @@ public class MRHashJoin{
 				
 				int i=0; //DBG
 				for (Iterator<Text> iterator = values.iterator(); iterator.hasNext();) {
-					Text value = (Text) iterator.next();					
-
+					Text value = (Text) iterator.next();	
+					
 					//System.out.println("RED populate inc:"+(i++)+" key:"+key+" val:"+value); //DBG
 
 					
 					String[] attrs=(value.toString()).split(delim);
+					hMapKey=attrs[joinPos];
 					//hash by join column, remove column from rest of tuple
-					hmap.put(attrs[joinPos], StringUtils.join(ArrayUtils.remove(attrs, joinPos),delim)); //can use ArrayUtils.remove(attrs, joinPos) to remove joining column
-
-					//System.out.println("RED hmap populate:"+hmap); //DBG
+					
+					if (hmap.containsKey(hMapKey)){
+						hmap.get(hMapKey).add(StringUtils.join(ArrayUtils.remove(attrs, joinPos),delim));
+					}else{
+						List<String> dataList=new ArrayList<String>();
+						dataList.add(StringUtils.join(ArrayUtils.remove(attrs, joinPos),delim));
+						hmap.put(hMapKey,dataList);
+					}
 
 				}
+								
+				//System.out.println("RED hmap populate:"+hmap); //DBG
+
 			}else{ 
 
-				//System.out.println("-----FINISHED BUILDING HMAP:"+hmap.size()); //DBG
+				System.out.println("-----FINISHED BUILDING HMAP:"+hmap.size()); //DBG
 				
 				//probe hash map
 
@@ -201,8 +212,9 @@ public class MRHashJoin{
 
 					String[] attrs=(value.toString()).split(delim);
 					
-					Set<String> others=hmap.get(attrs[joinPos]);
-					if (!others.isEmpty()){
+					List<String> others=hmap.get(attrs[joinPos]);
+
+					if ((others!=null)?(!others.isEmpty()):false){
 						for (String o : others){
 							 txt.set(attrs[joinPos]+context.getConfiguration().get("delimiter")+ //joining attribute
 										o+context.getConfiguration().get("delimiter")+ //relation in hash table
