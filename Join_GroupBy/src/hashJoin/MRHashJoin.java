@@ -62,7 +62,7 @@ public class MRHashJoin{
 			relation=((FileSplit)context.getInputSplit()).getPath().getName();
 
 			//get column position from configuration
-			columnPos=conf.getInt(relation+"_join_pos", -1);
+			columnPos=conf.getInt(context.getConfiguration().get(relation)+"_join_pos", -1);
 
 			//get delimiter from configuration
 			delim=conf.get("delimiter");
@@ -80,8 +80,10 @@ public class MRHashJoin{
 								
 				if (!values[columnPos].equals("null")){ //ignore rows with null value at join column
 
-					outKey.set(values[columnPos],relation);
+					outKey.set(values[columnPos],context.getConfiguration().get(relation));
 
+					//System.out.println("MAP out:"+outKey+","+value); //DBG
+					
 					context.write(outKey,value);
 				}else{
 					context.getCounter(JoinVals.NULL).increment(1);
@@ -114,7 +116,7 @@ public class MRHashJoin{
 		public int compare(WritableComparable w1, WritableComparable w2) {
 			TextPair tp1 = (TextPair) w1;
 			TextPair tp2 = (TextPair) w2;
-			return tp1.getSecond().compareTo(tp2.getSecond());
+			return (tp1.getSecond()).compareTo(tp2.getSecond());
 		}
 	}
 
@@ -131,7 +133,7 @@ public class MRHashJoin{
 		public int compare(WritableComparable w1, WritableComparable w2) {
 			TextPair ip1 = (TextPair) w1;
 			TextPair ip2 = (TextPair) w2;
-			return ip1.getSecond().compareTo(ip2.getSecond());
+			return (ip1.getSecond()).compareTo(ip2.getSecond());
 		}
 	}
 
@@ -154,7 +156,7 @@ public class MRHashJoin{
 			delim=conf.get("delimiter");
 			
 			hmap=HashMultimap.create();
-			
+						
 		}
 		
 		@Override
@@ -165,6 +167,8 @@ public class MRHashJoin{
 			
  
 			if (hmap.isEmpty()){
+				
+				
 				//populate hash map
 				
 				int i=0; //DBG
@@ -181,7 +185,10 @@ public class MRHashJoin{
 					//System.out.println("RED hmap populate:"+hmap); //DBG
 
 				}
-			}else{
+			}else{ 
+
+				//System.out.println("-----FINISHED BUILDING HMAP:"+hmap.size()); //DBG
+				
 				//probe hash map
 
 				//System.out.println("RED hmap probe:"+hmap); //DBG
@@ -204,6 +211,9 @@ public class MRHashJoin{
 						}
 					}
 				}
+				
+				//finished with join group, clear data
+				hmap.clear();
 			}
 			
 		}
@@ -229,9 +239,10 @@ public class MRHashJoin{
 		br0.close();
 		
 		//set join position for relation 0
-		conf.setInt(p0.getName()+"_join_pos",Arrays.asList(cols0.split(conf.get("delimiter"))).indexOf(joinCol));
+		conf.set(p0.getName(), "0");
+		conf.setInt(conf.get(p0.getName())+"_join_pos",Arrays.asList(cols0.split(conf.get("delimiter"))).indexOf(joinCol));
 		//output columns
-		String outCols0=StringUtils.join(ArrayUtils.remove(cols0.split(conf.get("delimiter")), conf.getInt(p0.getName()+"_join_pos", -1)),conf.get("delimiter"));
+		String outCols0=StringUtils.join(ArrayUtils.remove(cols0.split(conf.get("delimiter")), conf.getInt(conf.get(p0.getName())+"_join_pos", -1)),conf.get("delimiter"));
 		
 		//--relation 1--
 		//get column names
@@ -240,9 +251,10 @@ public class MRHashJoin{
 		br1.close();
 		
 		//set join position for relation 1
-		conf.setInt(p1.getName()+"_join_pos",Arrays.asList(cols1.split(conf.get("delimiter"))).indexOf(joinCol));
+		conf.set(p1.getName(),"1");
+		conf.setInt(conf.get(p1.getName())+"_join_pos",Arrays.asList(cols1.split(conf.get("delimiter"))).indexOf(joinCol));
 		//output columns
-		String outCols1=StringUtils.join(ArrayUtils.remove(cols1.split(conf.get("delimiter")), conf.getInt(p1.getName()+"_join_pos", -1)),conf.get("delimiter"));
+		String outCols1=StringUtils.join(ArrayUtils.remove(cols1.split(conf.get("delimiter")), conf.getInt(conf.get(p1.getName())+"_join_pos", -1)),conf.get("delimiter"));
 				
 		
 		//join columns

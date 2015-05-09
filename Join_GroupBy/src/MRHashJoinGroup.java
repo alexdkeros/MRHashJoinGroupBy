@@ -1,33 +1,11 @@
 import groupBy.MRGroupBy;
-import groupBy.MRGroupBy.GroupByMapper;
-import groupBy.MRGroupBy.GroupByReducer;
-import hashJoin.MRHashJoin.*;
 import hashJoin.MRHashJoin;
-import hashJoin.MRHashJoin.FirstPartitioner;
-import hashJoin.MRHashJoin.GroupComparator;
-import hashJoin.MRHashJoin.HashJoinMapper;
-import hashJoin.MRHashJoin.HashJoinReducer;
-import hashJoin.MRHashJoin.KeyComparator;
 import helperClasses.Merger;
-import helperClasses.TextPair;
 import helperClasses.Utils;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStreamReader;
-import java.util.Arrays;
-
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class MRHashJoinGroup {
 
