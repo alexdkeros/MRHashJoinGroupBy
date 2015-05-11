@@ -1,0 +1,67 @@
+% !TEX encoding = UTF-8
+\documentclass{article}
+
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[LGRx,T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,greek]{babel}
+
+\newcommand{\en}[1]{\foreignlanguage{english}{#1}}
+
+\begin{document}
+
+\title{Προχωρημένα Θέματα Βάσεων Δεδομένων}
+\author{Αλέξανδρος Δημήτριος Κέρος\\
+	A.M.2008030109\\
+	\foreignlanguage{english} {LAB40624686}}
+\date{}
+\maketitle
+
+\newpage
+\tableofcontents
+
+\newpage
+
+%---------------------------------------------------------
+\section{ΕΙΣΑΓΩΓΗ} \label{sec:Intro}
+
+Σκοπός της παρούσας εργασίας είναι η υλοποίηση των τελεστών \emph{\en{Hash-Join}} και \emph{\en{Group-By (Count)}} επί του κατανεμημένου συστήματος αποθήκευσης και επεξεργασίας μεγάλου όγκου δεδομένων \emph{\en{Hadoop}}, τηρώντας το προγραμματιστικό μοντέλο \emph{\en{MapReduce}} για την επεξεργασία δεδομένων με χρήση παράλληλων, κατανεμημένων αλγορίθμων.
+
+Η δομή της παρούσας αναφοράς είναι η ακόλουθη. Στο κεφάλαιο \ref{sec:Prelim} πραγματοποιείται συνοπτική αναφορά στο σύστημα \emph{\en{Hadoop}} και στο μοντέλο \emph{\en{MapReduce}}. Στο κεφάλαιο \ref{sec:Impl} περιγράφεται αναλυτικά η υλοποίηση των τελεστών (\emph{\en{Hadoop,GroupBy}}), καθώς και των επιπλέον λειτουργιών που ενσωματώθηκαν. Στο κεφάλαιο \ref{sec:ExpRes} αναλύεται η απόδοση των υλοποιηθέντων λειτουργειών όσον αφορά απαιτήσεις χρόνου και ορθότητας αποτελεσμάτων. Τέλος, στο κεφάλαιο \ref{sec:Eval} συνοψίζεται η παρούσα αναφορά και επισημαίνονται ορισμένες συμπερασματικές παρατηρήσεις.
+
+%---------------------------------------------------------
+\section{ΠΡΟΑΠΑΙΤΟΥΜΕΝΑ} \label{sec:Prelim}
+
+\subsection{\en{Hadoop}} \label{subsec:Hadoop}
+
+\subsection{\en{MapReduce}} \label{subsec:Mapreduce}
+
+%---------------------------------------------------------
+\section{ΥΛΟΠΟΙΗΣΗ} \label{sec:Impl}
+
+\subsection{\en{Hash Join}} \label{subsec:HJ}
+
+\subsection{\en{Group By}} \label{subsec:GB}
+
+\subsection{\en{Merge}} \label{subsec:MG}
+
+\subsection{Επιπλέον Λειτουργίες} \label{subsec:Extras}
+
+%---------------------------------------------------------
+\section{Πειραματικά Αποτελέσματα} \label{sec:ExpRes}
+
+%---------------------------------------------------------
+\section{Συμπεράσματα} \label{sec:Eval}
+
+μπλα μπλα
+
+\addcontentsline{toc}{section}{Αναφορές}
+	\begin{thebibliography}{9}
+		\bibitem{n} \foreignlanguage{english}{\url{http://}}
+
+	\end{thebibliography}
+\end{document}
