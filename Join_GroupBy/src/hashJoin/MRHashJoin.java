@@ -115,6 +115,12 @@ public class MRHashJoin{
 		public int compare(WritableComparable w1, WritableComparable w2) {
 			TextPair tp1 = (TextPair) w1;
 			TextPair tp2 = (TextPair) w2;
+			//variation
+			int cmp=(tp1.getFirst()).compareTo(tp2.getFirst());
+			if (cmp!=0){
+				return cmp;
+			}
+			//---------
 			return (tp1.getSecond()).compareTo(tp2.getSecond());
 		}
 	}
@@ -177,7 +183,7 @@ public class MRHashJoin{
 				for (Iterator<Text> iterator = values.iterator(); iterator.hasNext();) {
 					Text value = (Text) iterator.next();	
 					
-					//System.out.println("RED populate inc:"+(i++)+" key:"+key+" val:"+value); //DBG
+					System.out.println("RED populate inc:"+(i++)+" key:"+key+" val:"+value); //DBG
 
 					
 					String[] attrs=(value.toString()).split(delim);
@@ -194,7 +200,7 @@ public class MRHashJoin{
 
 				}
 								
-				//System.out.println("RED hmap populate:"+hmap); //DBG
+				System.out.println("RED hmap populate:"+hmap); //DBG
 
 			}else{ 
 
@@ -208,7 +214,7 @@ public class MRHashJoin{
 				for (Iterator<Text> iterator = values.iterator(); iterator.hasNext();) {
 					Text value = (Text) iterator.next();
 
-					//System.out.println("RED probe inc:"+(i++)+" key:"+key+" val:"+value); //DBG
+					System.out.println("RED probe inc:"+(i++)+" key:"+key+" val:"+value); //DBG
 
 					String[] attrs=(value.toString()).split(delim);
 					
