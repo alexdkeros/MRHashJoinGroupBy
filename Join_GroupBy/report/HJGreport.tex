@@ -1,4 +1,4 @@
-% !TEX encoding = UTF-8
+%!TEX encoding = UTF-8
 \documentclass{article}
 
 \usepackage{graphicx}
@@ -9,6 +9,8 @@
 \usepackage[LGRx,T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[english,greek]{babel}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 
 \newcommand{\en}[1]{\foreignlanguage{english}{#1}}
 
@@ -72,19 +74,119 @@
 
 \subsection{Αλγόριθμοι και Τελεστές, \en{Hash Join \& Group By}}\label{subsec:HashJoinGroupBy}
 
-\subsubsection{\en{Hash Join}}\label{subsubsec:HashJoin}
+\subsubsection{\en{Hash Join \& Parallel Hash Join}}\label{subsubsec:HashJoin}
 
-\subsubsection{\en{Group By}}\label{subsubsec:GroupBy}
+Ο \emph{\en{Hash Join}} τελεστής αποτελεί έναν αλγόριθμο συνένωσης σχέσεων επί κάποιας ισότητας ή ανισότητας στοιχείου στήλης μέσω πίνακα κατακερματισμού. Ο βασικός αλγόριθμος παρουσιάζεται στους αλγόριθμους \ref{algo:SHJ} και \ref{algo:GHJ}.
+\selectlanguage{english}
+
+\begin{algorithm}
+\caption{Simple Hash Join}
+\label{algo:SHJ}
+\begin{algorithmic}
+\Procedure{build phase}{}
+\For{each tuple $i \in R$}
+\State add $i$ to in-memory hash table $H$
+\EndFor
+\EndProcedure
+\Procedure{probe phase}{}
+\For{each tuple $j \in S$}
+\State probe $H$ for matching tuples $I$
+\For{each matching tuple $i \in I$}
+\State output$(i,j)$
+\EndFor
+\EndFor
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{GRACE Hash Join}
+\label{algo:GHJ}
+\begin{algorithmic}
+\Procedure{build phase}{}
+\For{each tuple $i \in R$}
+\State add $i$ to hash bucket $R_i$ using $h$ hash function
+\EndFor
+\For{each tuple $j \in S$}
+\State add $j$ to hash bucket $S_i$ using $h$ hash function
+\EndFor
+\EndProcedure
+
+\Procedure{probe phase}{}
+\For{each bucket $i$}
+\For{each tuple $r \in R_i$}
+\State insert into hash table $H$ using $h'$
+\EndFor
+\For{each tuple $s \in S_i$}
+\State probe $H$ using $h'$
+\State output joined tuples
+\EndFor
+\EndFor
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\selectlanguage{greek}
+
+Ο παράλληλος \emph{\en{Hash Join}} αλγόριθμος αποσκοπεί στον διαχωρισμό των σχέσεων για ταυτόχρονη εκτέλεση του τελεστή σε πλήθος μηχανημάτων. Κάθε μηχάνημα εκτελεί ένα μέρος της συνένωσης και στο τέλος τα επιμέρους αποτελέσματα συμπτύσσονται. Σκοπός είναι ο περιορισμός του χρόνου εκτέλεσης μέσω κατανομής εργασίας σε πληθώρα επεξεργαστών.
+ 
+\subsubsection{\en{Group By \& Parallel Group By}}\label{subsubsec:GroupBy}
+
+Ο \emph{\en{Group By}} τελεστής αποτελεί έναν αλγόριθμο ομαδοποίησης και υπολογισμού κάποιας πράξης συνάθροισης επί ενός επιθυμητού συνόλους στηλών μιας σχέσης, όπως παρουσιάζεται στον αλγόριθμο \ref{algo:GB}.
+
+\selectlanguage{english}
+\begin{algorithm}
+\caption{Group By}
+\label{algo:GB}
+\begin{algorithmic}
+\Procedure{Group By}{}
+\For{each tuple $i \in R$}
+\State add $i$ to $h(groupByColumns)$ bucket of hash table $H$
+\EndFor
+\For{each bucket $b \in H$}
+\State compute aggregate over $b$ and output
+\EndFor
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+\selectlanguage{greek}
+
+Ο παράλληλος \emph{\en{Group By}} αλγόριθμος εκμεταλεύεται τον κατακερματισμό της σχέσης (σύμφωνα με τον αλγόριθμο \ref{algo:GB}) για τον παράλληλο υπολογισμό των συναθροιστικών συναρτήσεων.
 
 %---------------------------------------------------------
 \section{ΥΛΟΠΟΙΗΣΗ} \label{sec:Impl}
 
 \subsection{\en{Hash Join}} \label{subsec:HJ}
 
+\begin{figure}[H]
+\hspace*{-4.2cm}
+\centering{\includegraphics[scale=0.45]{MRhashjoin.jpeg}
+\caption{\en{MapReduce Hash Join} υλοποίηση.\label{fig:MRHJ}
+}
+}
+\end{figure}
+
+
 \subsection{\en{Group By}} \label{subsec:GB}
+
+
+\begin{figure}[H]
+\hspace*{-4.2cm}
+\centering{\includegraphics[scale=0.45]{MRgroupby.jpeg}
+\caption{\en{MapReduce Group By} υλοποίηση.\label{fig:MRGB}
+}
+}
+\end{figure}
 
 \subsection{\en{Merge}} \label{subsec:MG}
 
+\begin{figure}[H]
+\hspace*{-4.2cm}
+\centering{\includegraphics[scale=0.45]{MRMerger.jpeg}
+\caption{\en{MapReduce Merger} υλοποίηση.\label{fig:MRMerger}
+}
+}
+\end{figure}
 \subsection{Επιπλέον Λειτουργίες} \label{subsec:Extras}
 
 %---------------------------------------------------------
