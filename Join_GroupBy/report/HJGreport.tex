@@ -82,7 +82,7 @@
 \begin{algorithm}
 \caption{Simple Hash Join}
 \label{algo:SHJ}
-\begin{algorithmic}
+\begin{algorithmic}[1]
 \Procedure{build phase}{}
 \For{each tuple $i \in R$}
 \State add $i$ to in-memory hash table $H$
@@ -102,7 +102,7 @@
 \begin{algorithm}
 \caption{GRACE Hash Join}
 \label{algo:GHJ}
-\begin{algorithmic}
+\begin{algorithmic}[1]
 \Procedure{build phase}{}
 \For{each tuple $i \in R$}
 \State add $i$ to hash bucket $R_i$ using $h$ hash function
@@ -138,7 +138,7 @@
 \begin{algorithm}
 \caption{Group By}
 \label{algo:GB}
-\begin{algorithmic}
+\begin{algorithmic}[1]
 \Procedure{Group By}{}
 \For{each tuple $i \in R$}
 \State add $i$ to $h(groupByColumns)$ bucket of hash table $H$
@@ -156,8 +156,27 @@
 %---------------------------------------------------------
 \section{ΥΛΟΠΟΙΗΣΗ} \label{sec:Impl}
 
+Η εκτέλεση του \emph{\en{MapReduce Hash Join Group By}} τελεστή πραγματοποιείται μέσω της εντολής \\ \texttt{\en{hadoop jar your\_jar.jar MRHashJoinGroup.class path\_to\_left\_table path\_to\_right\_table
+name\_of\_join\_column groupBy\_columns\_comma\_separated num\_of\_machines}}\\
+ και αποτελείται από δύο \en{Hadoop jobs} στην περίπτωση που χρησιμοποιηθεί \en{file system merger} ή τρία \en{Hadoop jobs} στην περίπτωση που χρησιμοποιηθεί \en{MapReduce Merger} (βλ. \ref{subsec:MG}).
+ 
+Παραμετροποίηση πρόσθετων λειτουργιών (\ref{subsec:MG},\ref{subsec:Extras}) δίνεται μέσω του αρχείου \texttt{\en{mapred-HJG.xml}}.
+
 \subsection{\en{Hash Join}} \label{subsec:HJ}
 
+Για την υλοποίηση του \emph{\en{Hash Join}} τελεστή χρησιμοποιήθηκε μια παράλληλη εκδοχή του \emph{\en{GRACE Hash Join}} αλγορίθμου (\ref{algo:GHJ}).
+
+Αρχικά, οι \texttt{\en{map}} συναρτήσεις εξάγουν ως κλειδί το στοιχείο επί του οποίου πραγματοποιείται η συνένωση σε συνδυασμό με ένα αναγνωριστικό της σχέσης από την οποία προήλθε η κάθε γραμμή. Για τον λόγο αυτό χρησιμοποιήθηκε η κλάση \texttt{\en{TextPair.java}} \cite{textpair}. Ως τιμή εξάγεται ολόκληρη η γραμμή.
+
+Στη συνέχεια πραγματοποιείται:
+\begin{itemize}
+\item \en{partitioning} (\texttt{\en{Partitioner}}) με βάση το πρώτο στοιχείο του κλειδιού (το στοιχείο της συνένωσης), ώστε να εξασφαλίζεται η συγκέντρωση των γραμμών με κοινά στοιχεία προς συνένωση στον ίδιο \en{Reducer}. 
+\item \en{grouping}  (\texttt{\en{GroupComparator}}) με βάση το δεύτερο στοιχείο του κλειδιού (το αναγνωριστικό της σχέσης), ώστε να εξασφαλίζεται η  προτεραιότητα μεταξύ των σχέσεων για τις \en{build} και \en{probe} φάσεις του αλγορίθμου.
+\item \en{sorting}  (\texttt{\en{KeyComparator}}) με βάση και τα δύο στοιχεία του κλειδιού για την ταξινόμησή τους.
+
+Τέλος, οι \texttt{\en{reduce}} συναρτήσεις αναλαμβάνουν την εκτέλεση του \emph{\en{GRACE Hash Join}} αλγορίθμου στο \emph{τμήμα} των σχέσεων που έχουν λάβει ως είσοδο.
+
+\end{itemize}
 \begin{figure}[H]
 \hspace*{-4.2cm}
 \centering{\includegraphics[scale=0.45]{MRhashjoin.jpeg}
@@ -169,6 +188,12 @@
 
 \subsection{\en{Group By}} \label{subsec:GB}
 
+Για την υλοποίηση του \emph{\en{Group By}} τελεστή χρησιμοποιήθηκε μια παράλληλη εκδοχή του αλγορίθμου \ref{algo:GB}.
+Αρχικά, οι \texttt{\en{map}} συναρτήσεις εξάγουν ως κλειδί την συνένωση των στοιχείων τα οποία επιθυμούμε να συναθροίσουμε. Ως τιμή εξάγεται ολόκληρη η γραμμή της σχέσης.
+
+Κατα το \en{Shuffle and Sort} στάδιο χρησιμοποιούνται οι προκαθορισμένες κλάσεις.
+
+Τέλος, οι \texttt{\en{reduce}} συναρτήσεις αναλαμβάνουν την συνάθροιση (εδώ \texttt{\en{count}}) των επιθυμητών τιμών αξιοποιώντας τη δομή μιας \emph{\en{MapReduce}} εργασίας, κατά την οποία ως είσοδο σε μια τέτοια συνάρτηση δίνεται μία δομή που περιέχει το σύνολο των τιμών που αντιστοιχούν σε ένα συγκεκριμένο κλειδί. 
 
 \begin{figure}[H]
 \hspace*{-4.2cm}
@@ -179,6 +204,7 @@
 \end{figure}
 
 \subsection{\en{Merge}} \label{subsec:MG}
+
 
 \begin{figure}[H]
 \hspace*{-4.2cm}
