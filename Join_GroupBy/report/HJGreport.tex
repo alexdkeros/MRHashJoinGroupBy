@@ -189,6 +189,7 @@ name\_of\_join\_column groupBy\_columns\_comma\_separated num\_of\_machines}}\\
 \subsection{\en{Group By}} \label{subsec:GB}
 
 Για την υλοποίηση του \emph{\en{Group By}} τελεστή χρησιμοποιήθηκε μια παράλληλη εκδοχή του αλγορίθμου \ref{algo:GB}.
+
 Αρχικά, οι \texttt{\en{map}} συναρτήσεις εξάγουν ως κλειδί την συνένωση των στοιχείων τα οποία επιθυμούμε να συναθροίσουμε. Ως τιμή εξάγεται ολόκληρη η γραμμή της σχέσης.
 
 Κατα το \en{Shuffle and Sort} στάδιο χρησιμοποιούνται οι προκαθορισμένες κλάσεις.
@@ -205,6 +206,11 @@ name\_of\_join\_column groupBy\_columns\_comma\_separated num\_of\_machines}}\\
 
 \subsection{\en{Merge}} \label{subsec:MG}
 
+Για την συνένωση των επιμέρους αρχείων αποτελεσμάτων σε ένα κοινό αρχείο παρέχονται δύο τρόποι:
+\begin{itemize}
+
+\item \emph{\en{MapReduce Merger}}\\
+Η υλοποίηση αυτή βασίζεται σε ένα \en{Hadoop Mapreduce job}, κατα το οποίο χρησιμοποιούνται όλες οι προκαθορισμένες κλάσεις, χωρίς κάποια παραμετροποίηση. Η ιδιαιτερότητα της εργασίας αυτής είναι η χρήση ενός μόνο \texttt{\en{reducer}}, ώστε να προκύψει τελικά ένα μόνο αρχείο εξόδου (βλ. σχήμα \ref{fig:MRMerger}).
 
 \begin{figure}[H]
 \hspace*{-4.2cm}
@@ -213,10 +219,38 @@ name\_of\_join\_column groupBy\_columns\_comma\_separated num\_of\_machines}}\\
 }
 }
 \end{figure}
+
+\item \emph{\en{FileSystem Merger}}\\
+Το \emph{\en{HDFS}} παρέχει τη δυνατότητα συνένωσης αρχείων μέσω της συνάρτησης \texttt{\en{IOUtils.copyBytes()}}, όπως χρησιμοποιήθηκε στη δημιουργηθείσα μέθοδο \texttt{\en{helperClasses.Utils.copyMergeWTitle()}}.
+
+\end{itemize}
 \subsection{Επιπλέον Λειτουργίες} \label{subsec:Extras}
 
+Πέραν των ζητηθέντων λειτουργιών, η παρούσα υλοποίηση προσφέρει τις παρακάτω επιπρόσθετες λειτουργίες:
+\begin{itemize}
+\item Δυνατότητα επιλογής φακέλων εξόδου του εκάστοτε τελεστή.
+\item Δυνατότητα επιλογής διαχωριστικού στηλών (\emph{\en{delimiter}}).
+\item Δυνατότητα προσθήκης ονόματων στηλών στην αρχή κάθε αρχείου εξόδου.
+\item Δυνατότητα εξαγωγής ονόματος σχέσης από το αρχείο και προσθήκη αυτού στο όνομα κάθε στήλης: \\ \texttt{\en{R.txt}} περιέχει τις στήλες \texttt{\en{id, name, surname}} \\
+ \texttt{\en{S.txt}} περιέχει τις στήλες \texttt{\en{id, name, age}} \\
+ Κατα την συνένωση στο πεδίο \texttt{\en{name}} το αποτέλεσμα είναι:\\
+  \texttt{\en{name, R.id, R.surname, S.id, S.age}}
+\item Δυνατότητα παραμετροποίησης των παραπάνω μέσω του αρχείου \texttt{\en{mapred-HJG.xml}}.
+\item Αρχείο μαζικής εκτέλεσης πειραμάτων και καταγραφής χρονικών απαιτήσεων σε αρχείο (\en{bash script}: \texttt{\en{mapred-HJG-run.sh}}).
+\item Δυνατότητα παραγωγής διαγράμματος χρόνων εκτέλεσης των παραπάνω πειραμάτων (\en{python script}: \texttt{\en{python/HJGPlotter.py}}).
+\end{itemize}
 %---------------------------------------------------------
 \section{Πειραματικά Αποτελέσματα} \label{sec:ExpRes}
+\subsection{Ορθότητα εκτέλεσης} \label{subsec:Corr}
+Η ορθότητα του αλγορίθμου αποδεικνύεται μέσω σύγκρισης των παραγόμενων αποτελεσμάτων με τα δοθέντα αποτελέσματα, παρέχοντας τις ίδιες παραμέτρους εκτέλεσης.
+
+\begin{figure}[H]
+\hspace*{-4.2cm}
+%\centering{\includegraphics[scale=0.45]{comm.jpg}
+\caption{Ορθότητα αλγορίθμου μέσω σύγκρισης με δοθέντα αποτελέσματα.\label{fig:Comm}
+%}
+}
+\end{figure}
 
 %---------------------------------------------------------
 \section{Συμπεράσματα} \label{sec:Eval}
