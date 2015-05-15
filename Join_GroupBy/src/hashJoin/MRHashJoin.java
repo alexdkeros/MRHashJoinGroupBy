@@ -183,7 +183,7 @@ public class MRHashJoin{
 				for (Iterator<Text> iterator = values.iterator(); iterator.hasNext();) {
 					Text value = (Text) iterator.next();	
 					
-					System.out.println("RED populate inc:"+(i++)+" key:"+key+" val:"+value); //DBG
+					//System.out.println("RED populate inc:"+(i++)+" key:"+key+" val:"+value); //DBG
 
 					
 					String[] attrs=(value.toString()).split(delim);
@@ -200,11 +200,11 @@ public class MRHashJoin{
 
 				}
 								
-				System.out.println("RED hmap populate:"+hmap); //DBG
+				//System.out.println("RED hmap populate:"+hmap); //DBG
 
 			}else{ 
 
-				System.out.println("-----FINISHED BUILDING HMAP:"+hmap.size()); //DBG
+				//System.out.println("-----FINISHED BUILDING HMAP:"+hmap.size()); //DBG
 				
 				//probe hash map
 
@@ -214,7 +214,7 @@ public class MRHashJoin{
 				for (Iterator<Text> iterator = values.iterator(); iterator.hasNext();) {
 					Text value = (Text) iterator.next();
 
-					System.out.println("RED probe inc:"+(i++)+" key:"+key+" val:"+value); //DBG
+					//System.out.println("RED probe inc:"+(i++)+" key:"+key+" val:"+value); //DBG
 
 					String[] attrs=(value.toString()).split(delim);
 					

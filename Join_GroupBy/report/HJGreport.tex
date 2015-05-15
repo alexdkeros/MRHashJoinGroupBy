@@ -242,24 +242,51 @@ name\_of\_join\_column groupBy\_columns\_comma\_separated num\_of\_machines}}\\
 %---------------------------------------------------------
 \section{Πειραματικά Αποτελέσματα} \label{sec:ExpRes}
 \subsection{Ορθότητα εκτέλεσης} \label{subsec:Corr}
-Η ορθότητα του αλγορίθμου αποδεικνύεται μέσω σύγκρισης των παραγόμενων αποτελεσμάτων με τα δοθέντα αποτελέσματα, παρέχοντας τις ίδιες παραμέτρους εκτέλεσης.
+Η ορθότητα του αλγορίθμου αποδεικνύεται μέσω σύγκρισης των παραγόμενων αποτελεσμάτων με τα δοθέντα αποτελέσματα, παρέχοντας τις ίδιες παραμέτρους εκτέλεσης (βλ.εικόνα \ref{fig:Comm}).
+
+Η σύγκριση πραγματοποιήθηκε με το εργαλείο \texttt{\en{comm -3 FILE0 FILE1}} των \en{Linux} το οποίο πραγματοποιεί σύγκριση δύο αρχείων και παρουσιάζει τις διαφορές τους. Το εργαλείο απαιτεί ταξινομημένα αρχεία εισόδου. Η ταξινόμηση πραγματοποιήθηκε με το εργαλείο \texttt{\en{sort FILE}} των \en{Linux}.
+
+Η μόνη διαφορά που παρατηρείται μεταξύ των δύο αρχείων είναι η προσθήκη ονομάτων στηλών, όπως σημειώνεται και στις Επιπλέον Λειτουργίες (βλ. \ref{subsec:Extras}).
+\newpage
+\begin{figure}[H]
+\vspace{-4cm}
+\hspace*{-3.5cm}
+\includegraphics[scale=0.37]{comm.png}
+\caption{Ορθότητα αλγορίθμου μέσω σύγκρισης με δοθέντα αποτελέσματα.\label{fig:Comm}}
+\end{figure}
+\newpage
+
+\subsection{Χρονικές επιδόσεις} \label{subsec:Timings}
+Ο απαιτούμενος χρόνος εκτέλεσης για μεταβλητό πλήθος \texttt{\en{reducers}} παρουσιάζεται στο σχήμα \ref{fig:Time}.
 
 \begin{figure}[H]
-\hspace*{-4.2cm}
-%\centering{\includegraphics[scale=0.45]{comm.jpg}
-\caption{Ορθότητα αλγορίθμου μέσω σύγκρισης με δοθέντα αποτελέσματα.\label{fig:Comm}
-%}
+\centering{
+%\includegraphics[scale=0.37]{timings.png}
+\caption{Χρονικές επιδόσεις αλγορίθμου με μεταβλητό πλήθος \texttt{\en{reducers}}.\label{fig:Time}}
 }
 \end{figure}
+
+
+
 
 %---------------------------------------------------------
 \section{Συμπεράσματα} \label{sec:Eval}
 
-μπλα μπλα
 
 \addcontentsline{toc}{section}{Αναφορές}
 	\begin{thebibliography}{9}
-		\bibitem{n} \foreignlanguage{english}{\url{http://}}
+		\bibitem{mapred_paper} \en{J. Dean and S. Ghemawat. Mapreduce: simplified data processing on large clusters. \textit{Commun. ACM}, 51(1):107–113, 2008.
+}
+\bibitem{gfs_paper} \en{
+S. Ghemawat, H. Gobioff, and S.-T. Leung. The google file system. \textit{SIGOPS
+Oper. Syst. Rev.}, 37(5):29–43, 2003.
+}
+\bibitem{hadoop_def_guide} \en{
+T. White. \textit{Hadoop: The Definitive Guide}. O’Reilly Media, 1 edition, June 2009.
+}
+\bibitem{apache_hadoop} \en{\url{http://hadoop.apache.org}}
+\bibitem{hash_join_wiki} \en{\url{http://en.wikipedia.org/wiki/Hash_join}}
+
 
 	\end{thebibliography}
 \end{document}
