@@ -12,6 +12,15 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 
+%appendix
+\usepackage[title,titletoc,toc]{appendix}
+
+%format paragraphs
+\usepackage{titlesec}
+\titleformat{\paragraph}[runin]{\normalfont\normalsize\itshape}{\theparagraph}{}{}[.] %format paragraph italic and ser a period after it
+\titlespacing{\paragraph}{0pt}{0pt}{*1} %remove spacing and add one characterspace after paragraph
+
+
 \newcommand{\en}[1]{\foreignlanguage{english}{#1}}
 
 \begin{document}
@@ -228,6 +237,7 @@ name\_of\_join\_column groupBy\_columns\_comma\_separated num\_of\_machines}}\\
 
 Πέραν των ζητηθέντων λειτουργιών, η παρούσα υλοποίηση προσφέρει τις παρακάτω επιπρόσθετες λειτουργίες:
 \begin{itemize}
+\item Δυνατότητα εκτέλεσης κάθε τελεστή ξεχωριστά (βλ. \ref{app:Running}).
 \item Δυνατότητα επιλογής φακέλων εξόδου του εκάστοτε τελεστή.
 \item Δυνατότητα επιλογής διαχωριστικού στηλών (\emph{\en{delimiter}}).
 \item Δυνατότητα προσθήκης ονόματων στηλών στην αρχή κάθε αρχείου εξόδου.
@@ -257,14 +267,24 @@ name\_of\_join\_column groupBy\_columns\_comma\_separated num\_of\_machines}}\\
 \newpage
 
 \subsection{Χρονικές επιδόσεις} \label{subsec:Timings}
-Ο απαιτούμενος χρόνος εκτέλεσης για μεταβλητό πλήθος \texttt{\en{reducers}} παρουσιάζεται στο σχήμα \ref{fig:Time}.
+Για την καταγραφή του χρόνου εκτέλεσης χρησιμοποιήθηκε το εργαλείο \texttt{\en{/usr/bin/time}} των \en{Linux}.
+
+\subsubsection{Τοπική Εκτέλεση} \label{subsubsec:LocalR}
+
+Ο απαιτούμενος χρόνος εκτέλεσης για μεταβλητό πλήθος \texttt{\en{reducers}} σε ενα τοπικό \en{Hadoop pseudo-cluster} (\cite{noll}) παρουσιάζεται στο σχήμα \ref{fig:Time}.
+
+Το \en{query}:\\
+\texttt{\en{\$HADOOP\_HOME/bin/hadoop jar ~/workspace/MRHashJoinGroup.jar MRHashJoinGroup /user/ak/S.txt /user/ak/R.txt salary \\ salary,R.id,R.rank,R.fname,R.sname,R.married,S.married,S.sname,S.rank,S.fname,S.id,S.foobar <reducers>}} \\
+,για τις σχέσεις που βρίσκονται στο \en{\url{http://courses.ece.tuc.gr/}}, στον ιστοχώρο του μαθήματος.
 
 \begin{figure}[H]
 \centering{
-%\includegraphics[scale=0.37]{timings.png}
+\includegraphics[scale=0.6]{local_times.png}
 \caption{Χρονικές επιδόσεις αλγορίθμου με μεταβλητό πλήθος \texttt{\en{reducers}}.\label{fig:Time}}
 }
 \end{figure}
+
+Με την αύξηση του πλήθους των \texttt{\en{reducers}} παρατηρείται αύξηση του απαιτούμενου χρόνου εκτέλεσης. Το γεγονός αυτό οφείλεται στις περιορισμένες δυνατότητες του \en{pseudo-cluster}, ο οποίος αδυνατεί να επιτύχει τον επιθυμητό παραλληλισμό εργασιών και μεγάλο μέρος του χρόνου εκτέλεσης της εργασίας αναλώνεται σε \en{context switching} μεταξύ παράλληλων \en{tasks}.
 
 
 
@@ -272,6 +292,24 @@ name\_of\_join\_column groupBy\_columns\_comma\_separated num\_of\_machines}}\\
 %---------------------------------------------------------
 \section{Συμπεράσματα} \label{sec:Eval}
 
+Το πλαίσιο \emph{\en{MapReduce}} σε συνδυασμό με την ανοιχτού κώδικα υλοποίηση του \emph{\en{Hadoop}} παρέχουν τη δυνατότητα επεξεργασίας μεγάλου όγκου δεδομένων σε πλήθος απλών μηχανημάτων (\en{commodity machines}) απαλάσσοντας τον χρήστη/προγραμματιστή από την εγγενή πολυπλοκότητα της παράλληλης επεξεργασίας και της κατανομής δεδομένων και εργασιών.
+
+Στην εργασία αυτή υλοποιήθηκε ένα ζεύγος τελεστών που συναντούνται συχνά σε ευρέως χρησιμοποιούμενα συστήματα βάσεων δεδομένων, οι τελεστές \emph{\en{Hash Join}} και \emph{\en{Group By}}, με σκοπό την εξοικείωση και την εις βάθος κατανόηση αφενός των αλγορίθμων των τελεστών αυτών, αφετέρου των προβλημάτων, των δυσκολιών και των πλεονεκτημάτων που επιφέρει η χρήση τέτοιων πλαισίων και συστημάτων παράλληλης επεξεργασίας δεδομένων.
+
+\newpage
+\begin{appendices}
+\section{Εκτέλεση} \label{app:Running}
+\begin{itemize}
+\item Εκτέλεση τελεστή \emph{\en{HashJoin}}: \texttt{\en{\$HADOOP\_HOME/bin/hadoop jar MRHashJoinGroup.jar hashJoin.MRHashJoin <input path 1> <input path 2> <output path> <join column name> <num of machines>}}
+
+\item Εκτέλεση τελεστή \emph{\en{Group By}}: \texttt{\en{\$HADOOP\_HOME/bin/hadoop jar MRHashJoinGroup.jar groupBy.MRGroupBy  <input path> <output path> <group by column names comma separated> <num of machines>}}
+
+\item Εκτέλεση τελεστή \emph{\en{Merger}}: \texttt{\en{\$HADOOP\_HOME/bin/hadoop jar MRHashJoinGroup.jar helperClasses.Merger <input path (folder)> <output path> <first line(optional)>}}
+
+\item Εκτέλεση τελεστή \emph{\en{Hash Join-Group By-Merge}}: \texttt{\en{\$HADOOP\_HOME/bin/hadoop jar MRHashJoinGroup.jar MRHashJoinGroup <path to left table> <path to right table> <name of join column> <group by column names comma separated> <num of machines>}}
+\end{itemize}
+\textbf{ΠΡΟΣΟΧΉ:} σε περίπτωση που είναι ενεργοποιημένη η λειτουργία προσθήκης ονοματός σχέσης στο όνομα κάθε στήλης (βλ. \ref{subsec:Extras}), απαιτείται η προσθήκη αυτού στο πεδίο \texttt{\en{<group by column names comma separated>}}. \\ Π.χ. \texttt{\en{\$HADOOP\_HOME/bin/hadoop jar ~/workspace/MRHashJoinGroup.jar MRHashJoinGroup /user/ak/S.txt /user/ak/R.txt married \\ married,S.sname,S.rank,S.fname,S.salary,S.id,S.foobar,R.id,R.rank,R.salary,R.fname,R.sname 4}}\\
+\end{appendices}
 
 \addcontentsline{toc}{section}{Αναφορές}
 	\begin{thebibliography}{9}
@@ -284,6 +322,7 @@ Oper. Syst. Rev.}, 37(5):29–43, 2003.
 \bibitem{hadoop_def_guide} \en{
 T. White. \textit{Hadoop: The Definitive Guide}. O’Reilly Media, 1 edition, June 2009.
 }
+\bibitem{noll} \en{\url{http://www.michael-noll.com/tutorials/running-hadoop-on-ubuntu-linux-single-node-cluster/}}
 \bibitem{apache_hadoop} \en{\url{http://hadoop.apache.org}}
 \bibitem{hash_join_wiki} \en{\url{http://en.wikipedia.org/wiki/Hash_join}}
 

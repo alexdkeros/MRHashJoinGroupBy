@@ -122,7 +122,7 @@ if __name__ == '__main__':
                             yScale="log",
                             xticks=data[k]["reducers"],
                             title="join:"+k.split()[0]+" group:"+k.split()[1],
-                            saveFlag=False,
+                            saveFlag=True,
                             showFlag=True,
                             filename="_".join(k.split())
                             )
