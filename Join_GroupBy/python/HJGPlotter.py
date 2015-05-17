@@ -102,20 +102,24 @@ if __name__ == '__main__':
         lines=f.readlines()
         data={}
         for i in range(len(lines)/4):
-            data[lines[i*4].split(" ",1)[1]]={"reducers":[],"real":[],"user":[],"sys":[]}
-            
+            data[lines[i*4].strip().split(" ",1)[1]]={"reducers":[],"real":[],"user":[],"sys":[]}
+        print(data.keys())
         for desc,real,user,syst in grouper(4,lines):
             jg=desc.strip().split(" ",1)[1]
-            data[jg]["reducers"].append(int(desc.split(" ",1)[0]))
-            data[jg]["real"].append(int(real.split()[1]))
-            data[jg]["user"].append(int(user.split()[1]))
-            data[jg]["sys"].append(int(syst.split()[1]))
+            print(jg)
+            r=desc.strip().split(" ",1)[0]
+            print(r)
+            data[jg]["reducers"].append(float(r))
+            data[jg]["real"].append(float(real.strip().split()[1]))
+            data[jg]["user"].append(float(user.strip().split()[1]))
+            data[jg]["sys"].append(float(syst.strip().split()[1]))
         
         for k in data.keys():
             multiplePlots2d([data[k]["reducers"]]*4,[data[k]["real"],data[k]["user"],data[k]["sys"]],
                             labels=["real","user","sys"],
                             xLabel="reducers",
                             yLabel="time",
+                            yScale="log",
                             xticks=data[k]["reducers"],
                             title="join:"+k.split()[0]+" group:"+k.split()[1],
                             saveFlag=False,
