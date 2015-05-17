@@ -103,11 +103,6 @@ public class MRGroupBy {
 
 		//filesystem
 		FileSystem hdfs=FileSystem.get(conf);
-		System.out.println(hdfs.getWorkingDirectory()); //DBG
-		
-
-		System.out.println("P0: "+hdfs.exists(p0));	//DBG
-		System.out.println("OutP: "+hdfs.exists(outp));	//DBG
 		
 		String colsRel=cols;
 		if (colsRel==null){
@@ -131,9 +126,6 @@ public class MRGroupBy {
 		}
 		conf.set("group_by_cols", StringUtils.join(colPos,conf.get("delimiter")));
 		
-		System.out.println("Relation cols:"+colsRel); //DBG
-		System.out.println("GroupBy cols:"+groupBy); //DBG
-		System.out.println("GroupBy cols pos:"+conf.get("group_by_cols")); //DBG
 		
 		//--job configuration--
 		Job job = new Job(conf,"GroupBy");

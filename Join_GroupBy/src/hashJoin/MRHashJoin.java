@@ -70,9 +70,7 @@ public class MRHashJoin{
 		@Override
 		public void map(LongWritable key, Text value, Context context) 
 				throws IOException, InterruptedException {
-			
-			//System.out.println("MAP key:"+key+" val:"+value);//DBG
-			
+						
 			if (!(key.equals(new LongWritable(0)) && context.getConfiguration().getBoolean("ignoreZeroLine", true))){ //ignore first line of file containing column names
 
 				String[] values=(value.toString()).split(delim);
@@ -81,8 +79,6 @@ public class MRHashJoin{
 
 					outKey.set(values[columnPos],context.getConfiguration().get(relation));
 
-					//System.out.println("MAP out:"+outKey+","+value); //DBG
-					
 					context.write(outKey,value);
 				}else{
 					context.getCounter(JoinVals.NULL).increment(1);
@@ -151,6 +147,7 @@ public class MRHashJoin{
 		private static HashMap<String,List<String>> hmap;
 		private String delim;
 		private Text txt=new Text();
+		private Text zeroRelIdentifier=new Text("0");
 		
 		@Override
 		public void setup(Context context){
@@ -174,7 +171,7 @@ public class MRHashJoin{
 			int joinPos=context.getConfiguration().getInt(key.getSecond()+"_join_pos", -1);
 			
  
-			if (hmap.isEmpty()){
+			if (key.getSecond().equals(zeroRelIdentifier)){
 				
 				
 				//populate hash map
@@ -183,7 +180,7 @@ public class MRHashJoin{
 				for (Iterator<Text> iterator = values.iterator(); iterator.hasNext();) {
 					Text value = (Text) iterator.next();	
 					
-					//System.out.println("RED populate inc:"+(i++)+" key:"+key+" val:"+value); //DBG
+					System.out.println("RED populate inc:"+(i++)+" key:"+key+" val:"+value); //DBG
 
 					
 					String[] attrs=(value.toString()).split(delim);
@@ -200,21 +197,16 @@ public class MRHashJoin{
 
 				}
 								
-				//System.out.println("RED hmap populate:"+hmap); //DBG
 
 			}else{ 
 
-				//System.out.println("-----FINISHED BUILDING HMAP:"+hmap.size()); //DBG
 				
 				//probe hash map
 
-				//System.out.println("RED hmap probe:"+hmap); //DBG
-				int i=0; //DBG
 				
 				for (Iterator<Text> iterator = values.iterator(); iterator.hasNext();) {
 					Text value = (Text) iterator.next();
 
-					//System.out.println("RED probe inc:"+(i++)+" key:"+key+" val:"+value); //DBG
 
 					String[] attrs=(value.toString()).split(delim);
 					
@@ -242,12 +234,6 @@ public class MRHashJoin{
 
 		//filesystem
 		FileSystem hdfs=FileSystem.get(conf);
-		System.out.println(hdfs.getWorkingDirectory()); //DBG
-		
-
-		System.out.println("P0: "+hdfs.exists(p0));	//DBG
-		System.out.println("P1: "+hdfs.exists(p1));	//DBG
-		System.out.println("OutP: "+hdfs.exists(outp));	//DBG
 		
 
 		//--relation 0--
