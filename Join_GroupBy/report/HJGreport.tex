@@ -141,7 +141,7 @@
  
 \subsubsection{\en{Group By \& Parallel Group By}}\label{subsubsec:GroupBy}
 
-Ο \emph{\en{Group By}} τελεστής αποτελεί έναν αλγόριθμο ομαδοποίησης και υπολογισμού κάποιας πράξης συνάθροισης επί ενός επιθυμητού συνόλους στηλών μιας σχέσης, όπως παρουσιάζεται στον αλγόριθμο \ref{algo:GB}.
+Ο \emph{\en{Group By}} τελεστής αποτελεί έναν αλγόριθμο ομαδοποίησης και υπολογισμού κάποιας πράξης συνάθροισης επί ενός επιθυμητού συνόλου στηλών μιας σχέσης, όπως παρουσιάζεται στον αλγόριθμο \ref{algo:GB}.
 
 \selectlanguage{english}
 \begin{algorithm}
@@ -160,7 +160,7 @@
 \end{algorithm}
 \selectlanguage{greek}
 
-Ο παράλληλος \emph{\en{Group By}} αλγόριθμος εκμεταλεύεται τον κατακερματισμό της σχέσης (σύμφωνα με τον αλγόριθμο \ref{algo:GB}) για τον παράλληλο υπολογισμό των συναθροιστικών συναρτήσεων.
+Ο παράλληλος \emph{\en{Group By}} αλγόριθμος εκμεταλλεύεται τον κατακερματισμό της σχέσης (σύμφωνα με τον αλγόριθμο \ref{algo:GB}) για τον παράλληλο υπολογισμό των συναθροιστικών συναρτήσεων.
 
 %---------------------------------------------------------
 \section{ΥΛΟΠΟΙΗΣΗ} \label{sec:Impl}
@@ -219,7 +219,7 @@ name\_of\_join\_column groupBy\_columns\_comma\_separated num\_of\_machines}}\\
 \begin{itemize}
 
 \item \emph{\en{MapReduce Merger}}\\
-Η υλοποίηση αυτή βασίζεται σε ένα \en{Hadoop Mapreduce job}, κατα το οποίο χρησιμοποιούνται όλες οι προκαθορισμένες κλάσεις, χωρίς κάποια παραμετροποίηση. Η ιδιαιτερότητα της εργασίας αυτής είναι η χρήση ενός μόνο \texttt{\en{reducer}}, ώστε να προκύψει τελικά ένα μόνο αρχείο εξόδου (βλ. σχήμα \ref{fig:MRMerger}).
+Η υλοποίηση αυτή βασίζεται σε ένα \en{Hadoop Mapreduce job}, κατά το οποίο χρησιμοποιούνται όλες οι προκαθορισμένες κλάσεις, χωρίς κάποια παραμετροποίηση. Η ιδιαιτερότητα της εργασίας αυτής είναι η χρήση ενός μόνο \texttt{\en{reducer}}, ώστε να προκύψει τελικά ένα μόνο αρχείο εξόδου (βλ. σχήμα \ref{fig:MRMerger}).
 
 \begin{figure}[H]
 \hspace*{-4.2cm}
@@ -240,7 +240,7 @@ name\_of\_join\_column groupBy\_columns\_comma\_separated num\_of\_machines}}\\
 \item Δυνατότητα εκτέλεσης κάθε τελεστή ξεχωριστά (βλ. \ref{app:Running}).
 \item Δυνατότητα επιλογής φακέλων εξόδου του εκάστοτε τελεστή.
 \item Δυνατότητα επιλογής διαχωριστικού στηλών (\emph{\en{delimiter}}).
-\item Δυνατότητα προσθήκης ονόματων στηλών στην αρχή κάθε αρχείου εξόδου.
+\item Δυνατότητα προσθήκης ονομάτων στηλών στην αρχή κάθε αρχείου εξόδου.
 \item Δυνατότητα εξαγωγής ονόματος σχέσης από το αρχείο και προσθήκη αυτού στο όνομα κάθε στήλης: \\ \texttt{\en{R.txt}} περιέχει τις στήλες \texttt{\en{id, name, surname}} \\
  \texttt{\en{S.txt}} περιέχει τις στήλες \texttt{\en{id, name, age}} \\
  Κατα την συνένωση στο πεδίο \texttt{\en{name}} το αποτέλεσμα είναι:\\
@@ -292,7 +292,7 @@ name\_of\_join\_column groupBy\_columns\_comma\_separated num\_of\_machines}}\\
 %---------------------------------------------------------
 \section{Συμπεράσματα} \label{sec:Eval}
 
-Το πλαίσιο \emph{\en{MapReduce}} σε συνδυασμό με την ανοιχτού κώδικα υλοποίηση του \emph{\en{Hadoop}} παρέχουν τη δυνατότητα επεξεργασίας μεγάλου όγκου δεδομένων σε πλήθος απλών μηχανημάτων (\en{commodity machines}) απαλάσσοντας τον χρήστη/προγραμματιστή από την εγγενή πολυπλοκότητα της παράλληλης επεξεργασίας και της κατανομής δεδομένων και εργασιών.
+Το πλαίσιο \emph{\en{MapReduce}} σε συνδυασμό με την ανοιχτού κώδικα υλοποίηση του \emph{\en{Hadoop}} παρέχουν τη δυνατότητα επεξεργασίας μεγάλου όγκου δεδομένων σε πλήθος απλών μηχανημάτων (\en{commodity machines}) απαλλάσσοντας τον χρήστη/προγραμματιστή από την εγγενή πολυπλοκότητα της παράλληλης επεξεργασίας και της κατανομής δεδομένων και εργασιών.
 
 Στην εργασία αυτή υλοποιήθηκε ένα ζεύγος τελεστών που συναντούνται συχνά σε ευρέως χρησιμοποιούμενα συστήματα βάσεων δεδομένων, οι τελεστές \emph{\en{Hash Join}} και \emph{\en{Group By}}, με σκοπό την εξοικείωση και την εις βάθος κατανόηση αφενός των αλγορίθμων των τελεστών αυτών, αφετέρου των προβλημάτων, των δυσκολιών και των πλεονεκτημάτων που επιφέρει η χρήση τέτοιων πλαισίων και συστημάτων παράλληλης επεξεργασίας δεδομένων.
 
@@ -308,7 +308,7 @@ name\_of\_join\_column groupBy\_columns\_comma\_separated num\_of\_machines}}\\
 
 \item Εκτέλεση τελεστή \emph{\en{Hash Join-Group By-Merge}}: \texttt{\en{\$HADOOP\_HOME/bin/hadoop jar MRHashJoinGroup.jar MRHashJoinGroup <path to left table> <path to right table> <name of join column> <group by column names comma separated> <num of machines>}}
 \end{itemize}
-\textbf{ΠΡΟΣΟΧΉ:} σε περίπτωση που είναι ενεργοποιημένη η λειτουργία προσθήκης ονοματός σχέσης στο όνομα κάθε στήλης (βλ. \ref{subsec:Extras}), απαιτείται η προσθήκη αυτού στο πεδίο \texttt{\en{<group by column names comma separated>}}. \\ Π.χ. \texttt{\en{\$HADOOP\_HOME/bin/hadoop jar ~/workspace/MRHashJoinGroup.jar MRHashJoinGroup /user/ak/S.txt /user/ak/R.txt married \\ married,S.sname,S.rank,S.fname,S.salary,S.id,S.foobar,R.id,R.rank,R.salary,R.fname,R.sname 4}}\\
+\textbf{ΠΡΟΣΟΧΉ:} σε περίπτωση που είναι ενεργοποιημένη η λειτουργία προσθήκης ονόματος σχέσης στο όνομα κάθε στήλης (βλ. \ref{subsec:Extras}), απαιτείται η προσθήκη αυτού στο πεδίο \texttt{\en{<group by column names comma separated>}}. \\ Π.χ. \texttt{\en{\$HADOOP\_HOME/bin/hadoop jar ~/workspace/MRHashJoinGroup.jar MRHashJoinGroup /user/ak/S.txt /user/ak/R.txt married \\ married,S.sname,S.rank,S.fname,S.salary,S.id,S.foobar,R.id,R.rank,R.salary,R.fname,R.sname 4}}\\
 \end{appendices}
 
 \addcontentsline{toc}{section}{Αναφορές}
