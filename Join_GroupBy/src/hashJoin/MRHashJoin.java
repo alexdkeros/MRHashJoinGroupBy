@@ -180,7 +180,7 @@ public class MRHashJoin{
 				for (Iterator<Text> iterator = values.iterator(); iterator.hasNext();) {
 					Text value = (Text) iterator.next();	
 					
-					System.out.println("RED populate inc:"+(i++)+" key:"+key+" val:"+value); //DBG
+					//System.out.println("RED populate inc:"+(i++)+" key:"+key+" val:"+value); //DBG
 
 					
 					String[] attrs=(value.toString()).split(delim);
